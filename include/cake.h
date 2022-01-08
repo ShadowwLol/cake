@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include "../include/MEL_logs.h"
 
 #define FILE_OK 0
 #define FILE_NOT_EXIST 1
