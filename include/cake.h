@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include "../include/MEL_logs.h"
 
@@ -16,6 +15,8 @@
 #define FILE_NOT_EXIST 1
 #define FILE_TOO_LARGE 2
 #define FILE_READ_ERROR 3
+
+CK_FN parse_file(const char * filename);
 
 char * CK_substr(char * src, int offset, int len);
 size_t CK_get_file_size(const char * f_name);
