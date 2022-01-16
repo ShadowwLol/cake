@@ -1,3 +1,4 @@
+build/cake
 build/CMakeLists.txt.user
 build/CMakeCache.txt
 build/CMakeFiles

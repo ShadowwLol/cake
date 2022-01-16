@@ -1,5 +1,18 @@
 #include "../include/cake.h"
 
+size_t CK_strc(char * str, int c, size_t index){
+    size_t o = 0;
+    for (size_t i = 0; str[i] != '\0'; ++i){
+        if (str[i] == c){
+            if (o == index){
+                return i;
+            }
+            ++o;
+        }
+    }
+    return EX_F;
+}
+
 char * CK_substr(char * src, int offset, int len){
     char * out = src+offset;
     out[len] = '\0';
@@ -26,7 +39,7 @@ size_t CK_get_file_size(const char * f_name){
     return length;
 }
 
-char * CK_read_file(const char * f_name, int * err, size_t * f_size) {
+char * CK_read_file(const char * f_name, size_t * f_size) {
     char * buffer;
     size_t length;
     FILE * f = fopen(f_name, "rb");
@@ -39,8 +52,7 @@ char * CK_read_file(const char * f_name, int * err, size_t * f_size) {
 
         /* 1 GiB; best not to load a whole large file in one string */
         if (length > 1073741824) {
-            *err = FILE_TOO_LARGE;
-
+            MEL_log(LOG_ERROR, "File too large: {%s}", f_name);
             return NULL;
         }
 
@@ -50,22 +62,19 @@ char * CK_read_file(const char * f_name, int * err, size_t * f_size) {
             read_length = fread(buffer, 1, length, f);
 
             if (length != read_length) {
-                 free(buffer);
-                 *err = FILE_READ_ERROR;
-
-                 return NULL;
+                free(buffer);
+                MEL_log(LOG_ERROR, "File read error: {%s}", f_name);
+                return NULL;
             }
         }
 
         fclose(f);
 
-        *err = FILE_OK;
         buffer[length] = '\0';
         *f_size = length;
     }
     else {
-        *err = FILE_NOT_EXIST;
-
+        MEL_log(LOG_ERROR, "File does not exist: {%s}", f_name);
         return NULL;
     }
 

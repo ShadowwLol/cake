@@ -1,5 +1,42 @@
 #include "../include/cake.h"
 
+CK_FN lex_string(const char * fstr, const size_t sz, char * _fstr){
+    //char _fstr[sz];
+    size_t j = 0;
+    bool commenting = false;
+    bool inside_quotes = false;
+
+    /* LEXING */
+    for (size_t i = 0; i < sz; ++i){
+        if (fstr[i] == '/' && fstr[++i] == '/'){
+            commenting = true;
+        }
+        if (fstr[i-1] == '\n' && commenting){
+            commenting = false;
+        }
+
+        if (fstr[i] == '\"' && !commenting){
+            inside_quotes = !inside_quotes;
+        }
+
+        if (!commenting){
+            if (!inside_quotes){
+                if (!isspace(fstr[i])){
+                    _fstr[j] = fstr[i];
+                    ++j;
+                }
+            }else{
+                _fstr[j] = fstr[i];
+                ++j;
+            }
+        }
+    }
+    _fstr[j] = '\0';
+    /* * * * * */
+
+    return EX_S;
+}
+
 CK_FN parse_file(const char * filename){
     size_t f_sz;
     FILE * fp = fopen(filename, "rb");
