@@ -1,50 +1,10 @@
 #include "../include/cake.h"
 
-size_t get_line_count(const char * _fstr, const size_t sz){
-    size_t line_count = 0;
-
-    size_t i = 0;
-    for (; i < sz; ++i){
-        if (_fstr[i] == ';'){
-            ++line_count;
-        }
-    }
-
-    return line_count;
-}
-
-char * get_line(const char * _fstr, const size_t sz, const size_t index){
-    if (index > get_line_count(_fstr, sz)){
-        return NULL;
-    };
-
-    char * line;
-    size_t lc = 0;
-
-    size_t i = 0;
-    for (; i < sz; ++i){
-        if (_fstr[i] == ';'){
-            if (lc+1 == index){
-                line = (char *)(_fstr+i);
-            }else if (lc == index){
-                line[i] = '\0';
-                break;
-            }
-            ++lc;
-        }
-    }
-
-    //char * line = (char *)_fstr;
-    //line[i] = '\0';
-
-    return line;
-}
-
 const int khstri = 33;
 KHASH_MAP_INIT_STR(khstri, int);
 
 CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
-   int ret, is_missing;
+   int is_missing;
    khiter_t k;
    khash_t(khstri) *h = kh_init(khstri); // create a hashtable
 
@@ -189,7 +149,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                                     putchar(_fstr[0]);
                                 }else{
                                     printf("\n%s\n", _fstr);
-                                    printf("%0*c^\n", i, ' ');
+                                    printf("%0*d^\n", (int)i, ' ');
                                     MEL_log(LOG_ERROR, "Invalid escape sequence");
                                     return EX_F;
                                 }
@@ -229,14 +189,14 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
 
             //printf("\n#####\nline:\"%s\"\n#####\n", _fstr);
 
-            char filename[sz-i];
-            size_t o = 0;
+            char * filename = _fstr;
+            size_t index = 0;
             while (_fstr[0] != '\"' && _fstr[0] != '\0'){
-                filename[o] = _fstr[0];
-                ++o;
+                ++index;
                 ++i;
                 ++_fstr;
             }
+            filename[index] = '\0';
 
             //printf("FILENAME: \"%s\";\n", filename);
             if (0 == strcmp(filename, curr_file)){

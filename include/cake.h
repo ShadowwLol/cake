@@ -36,11 +36,6 @@ inline static void set_debug(bool d){
     debug = d;
 }
 
-#define FILE_OK 0
-#define FILE_NOT_EXIST 1
-#define FILE_TOO_LARGE 2
-#define FILE_READ_ERROR 3
-
 CK_FN interpret_file(const char * filename);
 CK_FN lex_string(const char * fstr, const size_t sz, char * _fstr);
 CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz);

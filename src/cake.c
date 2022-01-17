@@ -12,10 +12,10 @@ CK_FN interpret_file(const char * filename){
 
     char _file[sz];
     lex_string(file, sz, _file);
-    //printf("FSTR:\n%s\n\n_FSTR:\n%s\n\n", file, _file);
     free(file);
 
     parse_string(filename, _file, sz);
+    return EX_S;
 }
 
 int main(int argc, char * argv[]){
