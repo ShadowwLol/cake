@@ -21,12 +21,12 @@ print("myint is: ");
 print(myint);
 print("\n");
 
-myint = 69;
+i32 myint = 69;
 print("myint is: ");
 print(myint);
 print("\n");
 
-i32 myint = 42;
+myint = 42;
 print("myint is: ");
 print(myint);
 print("\n");

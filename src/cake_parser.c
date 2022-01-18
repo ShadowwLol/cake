@@ -160,13 +160,13 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 ++i;
                 ++_fstr;
             }
-            k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
-            if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
-                kh_set(khstri, h_datatype, var_n, CK_INT32_T);
-            } else {
-                MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
-                return EX_F;
-            }
+            //k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
+            //if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
+            //    kh_set(khstri, h_datatype, var_n, CK_INT32_T);
+            //} else {
+            //    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+            //    return EX_F;
+            //}
 
             if (!assigned){
                 var_n[index] = '\0';
