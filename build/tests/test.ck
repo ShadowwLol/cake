@@ -21,5 +21,15 @@ print("myint is: ");
 print(myint);
 print("\n");
 
+myint = 69;
+print("myint is: ");
+print(myint);
+print("\n");
+
+i32 myint = 42;
+print("myint is: ");
+print(myint);
+print("\n");
+
 // call file as function
 use("%{here}"); // %{here} gets expanded to <current_filename>

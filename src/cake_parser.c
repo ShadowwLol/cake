@@ -1,12 +1,54 @@
 #include "../include/cake.h"
 
+typedef enum{
+    CK_UINT8_T = 0, CK_UINT32_T, CK_UINT64_T,
+    CK_INT8_T,  CK_INT32_T,  CK_INT64_T,
+    CK_STR_T, CK_CHAR_T,
+    CK_BOOL_T,
+} CK_DATATYPES;
+
+char * CK_DATATYPES_TO_STR(int8_t datatype){
+    switch (datatype){
+        case CK_UINT8_T:
+            return "ui8";
+        case CK_UINT32_T:
+            return "ui32";
+        case CK_UINT64_T:
+            return "ui64";
+
+        case CK_INT8_T:
+            return "i8";
+        case CK_INT32_T:
+            return "i32";
+        case CK_INT64_T:
+            return "i64";
+
+        case CK_STR_T:
+            return "str";
+        case CK_CHAR_T:
+            return "char";
+        case CK_BOOL_T:
+            return "bool";
+        default:
+            return "NULL";
+    }
+}
+
+/* Data Type hashtable */
 const int khstri = 33;
 KHASH_MAP_INIT_STR(khstri, int);
+/* * * * * * * * * * * */
+
+/* Value hashtable */
+const int khstrs = 32;
+KHASH_MAP_INIT_STR(khstrs, char*);
+/* * * * * * * * * * * */
 
 CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
-   int is_missing;
    khiter_t k;
-   khash_t(khstri) *h = kh_init(khstri); // create a hashtable
+
+   khash_t(khstri) * h_datatype = kh_init(khstri); // create a hashtable
+   khash_t(khstrs) * h_value = kh_init(khstrs); // create a hashtable
 
 #if 0
    kh_set(khStrInt, h, "jimbo", 99);
@@ -102,13 +144,15 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     }
                     value[index] = '\0';
 
-                    char * e = NULL;
-                    long number = strtol(value, &e, 10);
-                    kh_set(khstri, h, var_n, number); // default all i32 to 0
-                    if (e == value){
-                        MEL_log(LOG_ERROR, "Invalid i32 assignment in file {%s}\n", curr_file);
+                    k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
+                    if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
+                        kh_set(khstri, h_datatype, var_n, CK_INT32_T);
+                        kh_set(khstrs, h_value, var_n, value);
+                    } else {
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
                         return EX_F;
                     }
+
                     assigned = true;
                     break;
                 }
@@ -116,9 +160,17 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 ++i;
                 ++_fstr;
             }
+            k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
+            if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
+                kh_set(khstri, h_datatype, var_n, CK_INT32_T);
+            } else {
+                MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                return EX_F;
+            }
+
             if (!assigned){
                 var_n[index] = '\0';
-                kh_set(khstri, h, var_n, 0); // default all i32 to 0
+                kh_set(khstrs, h_value, var_n, "0"); // default all i32 to 0
             }
         }else if (0 == strncmp("print(", _fstr, 6)){
             i += 6;
@@ -174,12 +226,12 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 var_n[index] = '\0';
 
                 // Retrieve the value for the specified key
-                k = kh_get(khstri, h, var_n);  // first have to get ieter
-                if (k == kh_end(h)) {  // k will be equal to kh_end if key not present
+                k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
+                if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
                     MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}\n", var_n, curr_file);
                     return EX_F;
                 } else {
-                    printf("%d", kh_val(h,k)); // next have to fetch  the actual value
+                    printf("%d", kh_val(h_datatype,k)); // next have to fetch  the actual value
                 }
                 /* * * * * * * * * * */
             }
@@ -219,8 +271,8 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
             var_n[index] = '\0';
 
             /* search through hashtable for variable name */
-            k = kh_get(khstri, h, var_n);  // first have to get ieter
-            if (k == kh_end(h)) {  // k will be equal to kh_end if key not present
+            k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
+            if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
                 MEL_log(LOG_ERROR, "Undefined keyword \"%s\"[%d] in file {%s}\n", var_n, i, curr_file);
                 return EX_F;
             } else {
@@ -238,7 +290,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                            ++i;
                        }
                        val[in] = '\0';
-                       kh_set(khstri, h, var_n, atoi(val));
+                       kh_set(khstri, h_datatype, var_n, atoi(val));
                        break;
                    default:
                        break;
@@ -247,7 +299,8 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
         }
     }
    // cleanup and remove our hashtable
-   kh_destroy(khstri, h);
+   kh_destroy(khstri, h_datatype);
+   kh_destroy(khstrs, h_value);
 
 #if 0
     //printf("\n\n%s", get_line(_fstr, sz));
@@ -270,4 +323,5 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
         }
     }
 #endif
+    return EX_S;
 }
