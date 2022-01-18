@@ -231,7 +231,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}\n", var_n, curr_file);
                     return EX_F;
                 } else {
-                    printf("%d", kh_val(h_datatype,k)); // next have to fetch  the actual value
+                    printf("%s", kh_val(h_value,k)); // next have to fetch  the actual value
                 }
                 /* * * * * * * * * * */
             }
@@ -290,7 +290,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                            ++i;
                        }
                        val[in] = '\0';
-                       kh_set(khstri, h_datatype, var_n, atoi(val));
+                       kh_set(khstrs, h_value, var_n, val);
                        break;
                    default:
                        break;
