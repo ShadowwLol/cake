@@ -160,6 +160,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     ++i;
                     ++_fstr;
                 }
+                ++_fstr;
                 /* * * * * * * * * * * * * */
             }else{
                 /* Printing variable */
@@ -178,7 +179,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}\n", var_n, curr_file);
                     return EX_F;
                 } else {
-                   printf("%d", kh_val(h,k)); // next have to fetch  the actual value
+                    printf("%d", kh_val(h,k)); // next have to fetch  the actual value
                 }
                 /* * * * * * * * * * */
             }
@@ -206,6 +207,43 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
             interpret_file(filename);
 
             //printf("printing\n");
+        }else{
+            /* variable name? */
+            char * var_n = _fstr;
+            size_t index = 0;
+            while (_fstr[0] != '+' && _fstr[0] != '=' && _fstr[0] != ';' && _fstr[0] != '\0'){
+                ++index;
+                ++i;
+                ++_fstr;
+            }
+            var_n[index] = '\0';
+
+            /* search through hashtable for variable name */
+            k = kh_get(khstri, h, var_n);  // first have to get ieter
+            if (k == kh_end(h)) {  // k will be equal to kh_end if key not present
+                MEL_log(LOG_ERROR, "Undefined keyword \"%s\"[%d] in file {%s}\n", var_n, i, curr_file);
+                return EX_F;
+            } else {
+               /* Check for '=' or '+' or '-' [...] in _fstr[0] */
+               switch(_fstr[0]){
+                   case 0:
+                   case '=':
+                       ++_fstr;
+                       ++i;
+                       char * val = _fstr;
+                       size_t in = 0;
+                       while (_fstr[0] != ';' && _fstr[0] != '\0'){
+                           ++in;
+                           ++_fstr;
+                           ++i;
+                       }
+                       val[in] = '\0';
+                       kh_set(khstri, h, var_n, atoi(val));
+                       break;
+                   default:
+                       break;
+               }
+            }
         }
     }
    // cleanup and remove our hashtable
