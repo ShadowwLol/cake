@@ -25,13 +25,22 @@ int main(int argc, char * argv[]){
 
 	/* Parsing arguments */
 	int option = 0;
-	if ((option = getopt(argc, argv, "i:")) != -1){
+	if ((option = getopt(argc, argv, "di:")) != -1){
+        /* FIXME: getopt only handles one arg at a time */
 		switch(option){
+            case 'd':
+                /* Debugging */
+                if (argc < 3){
+                    return EX_F;
+                }
+                set_debug(true);
+                MEL_log(LOG_INFORMATION, "Debugging");
+                break;
 			case 'i':
 				/* Interpret */
                 interpret_file(optarg);
 				break;
-			case '?':
+			default:
 				CK_USAGE();
 				return EX_F;
 		}

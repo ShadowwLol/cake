@@ -1,4 +1,11 @@
 // this is a program made with cake!
+
+// these are logging functions:
+err("This is an error!");
+warn("This is a warning!");
+info("This is an info!");
+// * * * * * * * * * * * * * * *
+
 // this is a comment!
 print("in file: _here()\n");
 print("1\n");

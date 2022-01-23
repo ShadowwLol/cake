@@ -1,7 +1,7 @@
 #ifndef _CAKE_H
 #define _CAKE_H
 
-#define CK_FN unsigned char
+#define CK_FN uint8_t
 #define EX_S (0)
 #define EX_F (255)
 
@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <ctype.h>
-#include "../include/MEL_logs.h"
-#include "../include/khash.h"
+#include "MEL_logs.h"
+#include "khash.h"
 
 // shorthand way to get the key from hashtable or defVal if not found
 #define kh_get_val(kname, hash, key, defVal) ({k=kh_get(kname, hash, key);(k!=kh_end(hash)?kh_val(hash,k):defVal);})
@@ -23,7 +23,9 @@
 
 #define CK_USAGE(){\
     MEL_log(LOG_INFORMATION, "CAKE USAGE:\n"\
-                             "./cake -i <filename>");\
+                             "\t./cake\n"\
+                             "\t\t-i <filename>\t=>\tinterpret script\n"\
+                             "\t\t-d           \t=>\tenable debugging\n");\
 }
 
 static bool debug = false;
