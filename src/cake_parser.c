@@ -1,5 +1,10 @@
 #include "../include/cake.h"
 
+#define advance_parser(str, c, n){\
+    c += n;\
+    str += n;\
+}
+
 typedef enum{
     CK_UINT8_T = 0, CK_UINT32_T, CK_UINT64_T,
     CK_INT8_T,  CK_INT32_T,  CK_INT64_T,
@@ -34,6 +39,18 @@ char * CK_DATATYPES_TO_STR(int8_t datatype){
     }
 }
 
+bool is_i32(const char * input){
+    for (size_t i = 0; i < strlen(input); ++i){
+        if (!isdigit(input[i])){ /* filters floats and strings */
+            return false;
+        }
+    }
+    if (atoll(input) >= INT32_MIN && atoll(input) <= INT32_MAX){
+        return true;
+    }
+    return false;
+}
+
 /* Data Type hashtable */
 const int khstri = 33;
 KHASH_MAP_INIT_STR(khstri, int);
@@ -45,7 +62,7 @@ KHASH_MAP_INIT_STR(khstrs, char*);
 /* * * * * * * * * * * */
 
 CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
-   khiter_t k;
+   khiter_t k = 0;
 
    khash_t(khstri) * h_datatype = kh_init(khstri); // create a hashtable
    khash_t(khstrs) * h_value = kh_init(khstrs); // create a hashtable
@@ -116,33 +133,37 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
 
 #endif
 
-    CK_replace_str(_fstr, "\%{here}", curr_file);
+    char * str = _fstr;
     for (size_t i = 0; i <= sz && _fstr[0] != '\0'; ++i, ++_fstr){
-        if (_fstr[0] == ';'){
-            //printf("%s\n", _fstr);
-            ++_fstr;
+        _fstr = str+i;
+        if (_fstr[0] == ';' || _fstr[0] == ')'){
+            advance_parser(_fstr, i, 1);
         }
 
         if (0 == strncmp("i32", _fstr, 3)){
             bool assigned = false;
 
-            _fstr += 3;
+            advance_parser(_fstr, i, 3);
+
             char * var_n = _fstr;
             size_t index = 0;
             while (_fstr[0] != ';' && _fstr[0] != '\0'){
                 if (_fstr[0] == '='){
                     /* Assignment to a variable */
-                    ++_fstr;
+                    advance_parser(_fstr, i, 1);
                     var_n[index] = '\0';
 
                     char * value = _fstr;
                     index = 0;
                     while (_fstr[0] != ';' && _fstr[0] != '\0'){
                         ++index;
-                        ++i;
-                        ++_fstr;
+                    advance_parser(_fstr, i, 1);
                     }
                     value[index] = '\0';
+                    if (!is_i32(value)){
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        return EX_F;
+                    }
 
                     k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
                     if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
@@ -157,8 +178,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     break;
                 }
                 ++index;
-                ++i;
-                ++_fstr;
+                advance_parser(_fstr, i, 1);
             }
             //k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
             //if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
@@ -173,16 +193,14 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 kh_set(khstrs, h_value, var_n, "0"); // default all i32 to 0
             }
         }else if (0 == strncmp("print(", _fstr, 6)){
-            i += 6;
-            _fstr += 6;
+            advance_parser(_fstr, i, 6);
 
             if (_fstr[0] == '\"'){
                 /* Printing string literal */
-                ++_fstr;
+                advance_parser(_fstr, i, 1);
                 while (_fstr[0] != '\"' && _fstr[0] != '\0'){
                     if (_fstr[0] == '\\'){
-                        ++i;
-                        ++_fstr;
+                        advance_parser(_fstr, i, 1);
                         switch (_fstr[0]){
                             case 'n':
                                 putchar('\n');
@@ -193,8 +211,17 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                             case 't':
                                 putchar('\t');
                                 break;
+                            case '_':
+                                putchar('_');
+                                break;
                             case '\\':
                                 putchar('\\');
+                                break;
+                            case '\"':
+                                putchar('\"');
+                                break;
+                            case '\'':
+                                putchar('\'');
                                 break;
                             default:
                                 if (isalnum(_fstr[0])){
@@ -209,10 +236,9 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     }else{
                         putchar(_fstr[0]);
                     }
-                    ++i;
-                    ++_fstr;
+                    advance_parser(_fstr, i, 1);
                 }
-                ++_fstr;
+                advance_parser(_fstr, i, 1);
                 /* * * * * * * * * * * * * */
             }else{
                 /* Printing variable */
@@ -220,8 +246,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 size_t index = 0;
                 while (_fstr[0] != ')' && _fstr[0] != ';' && _fstr[0] != '\0'){
                     ++index;
-                    ++_fstr;
-                    ++i;
+                    advance_parser(_fstr, i, 1);
                 }
                 var_n[index] = '\0';
 
@@ -237,8 +262,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
             }
             //printf("printing\n");
         }else if (0 == strncmp("use(\"", _fstr, 5)){
-            i+=5;
-            _fstr+=5;
+            advance_parser(_fstr, i, 5);
 
             //printf("\n#####\nline:\"%s\"\n#####\n", _fstr);
 
@@ -246,8 +270,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
             size_t index = 0;
             while (_fstr[0] != '\"' && _fstr[0] != '\0'){
                 ++index;
-                ++i;
-                ++_fstr;
+                advance_parser(_fstr, i, 1);
             }
             filename[index] = '\0';
 
@@ -265,8 +288,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
             size_t index = 0;
             while (_fstr[0] != '+' && _fstr[0] != '=' && _fstr[0] != ';' && _fstr[0] != '\0'){
                 ++index;
-                ++i;
-                ++_fstr;
+                advance_parser(_fstr, i, 1);
             }
             var_n[index] = '\0';
 
@@ -280,16 +302,28 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                switch(_fstr[0]){
                    case 0:
                    case '=':
-                       ++_fstr;
-                       ++i;
-                       char * val = _fstr;
-                       size_t in = 0;
-                       while (_fstr[0] != ';' && _fstr[0] != '\0'){
-                           ++in;
-                           ++_fstr;
-                           ++i;
-                       }
+                        advance_parser(_fstr, i, 1);
+                        char * val = _fstr;
+                        size_t in = 0;
+                        while (_fstr[0] != ';' && _fstr[0] != '\0'){
+                            ++in;
+                            advance_parser(_fstr, i, 1);
+                        }
                        val[in] = '\0';
+
+                       bool a_failed = false;
+                       switch(kh_val(h_datatype, k)){
+                           case CK_INT32_T:
+                                if (!is_i32(val)){a_failed = true;}
+                                break;
+                           default:
+                               break;
+                        }
+                        if (a_failed){
+                            MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned \"%s\" in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), val, curr_file);
+                            return EX_F;
+                        }
+
                        kh_set(khstrs, h_value, var_n, val);
                        break;
                    default:

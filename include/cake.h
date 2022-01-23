@@ -37,7 +37,7 @@ inline static void set_debug(bool d){
 }
 
 CK_FN interpret_file(const char * filename);
-CK_FN lex_string(const char * fstr, const size_t sz, char * _fstr);
+CK_FN lex_string(const char * filename, const char * fstr, const size_t sz, char * _fstr);
 CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz);
 CK_FN parse_file(const char * filename);
 

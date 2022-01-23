@@ -1,6 +1,6 @@
 #include "../include/cake.h"
 
-CK_FN lex_string(const char * fstr, const size_t sz, char * _fstr){
+CK_FN lex_string(const char * filename, const char * fstr, const size_t sz, char * _fstr){
     //char _fstr[sz];
     size_t j = 0;
     bool commenting = false;
@@ -32,6 +32,7 @@ CK_FN lex_string(const char * fstr, const size_t sz, char * _fstr){
         }
     }
     _fstr[j] = '\0';
+    CK_replace_str(_fstr, "_here()", filename);
     /* * * * * */
 
     return EX_S;

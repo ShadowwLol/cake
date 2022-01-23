@@ -11,7 +11,7 @@ CK_FN interpret_file(const char * filename){
     }
 
     char _file[sz];
-    lex_string(file, sz, _file);
+    lex_string(filename, file, sz, _file);
     free(file);
 
     parse_string(filename, _file, sz);

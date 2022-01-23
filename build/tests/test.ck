@@ -1,5 +1,6 @@
 // this is a program made with cake!
 // this is a comment!
+print("in file: _here()\n");
 print("1\n");
 print("22\n");
 print("333\n");
@@ -21,15 +22,18 @@ print("myint is: ");
 print(myint);
 print("\n");
 
-i32 myint = 69;
+print("_typeof(myint)\n");
+
+myint = 69;
 print("myint is: ");
 print(myint);
 print("\n");
 
-myint = 42;
+myint = 2000000000;
 print("myint is: ");
 print(myint);
 print("\n");
 
 // call file as function
-use("%{here}"); // %{here} gets expanded to <current_filename>
+print("Calling _ here() function in _here()\n");
+use("_here()"); // %{here} gets expanded to <current_filename>
