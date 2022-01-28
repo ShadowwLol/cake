@@ -3,7 +3,7 @@
 // these are logging functions:
 err("This is an error!");
 warn("This is a warning!");
-info("This is an info!");
+info("This is an info!\n\n\nthese were a couple of new lines and\tthisisatab!\r\n");
 // * * * * * * * * * * * * * * *
 
 // this is a comment!
@@ -28,8 +28,6 @@ myint = 2;
 print("myint is: ");
 print(myint);
 print("\n");
-
-print("_typeof(myint)\n");
 
 myint = 69;
 print("myint is: ");

@@ -14,6 +14,15 @@
 #include "MEL_logs.h"
 #include "khash.h"
 
+/* CAKE SYNTAX */
+#define CK_LERR_KW "err"
+#define CK_LWRN_KW "warn"
+#define CK_LINF_KW "info"
+
+#define CK_PRNT_KW "print"
+#define CK_CALL_KW "use"
+/* * * * * * * */
+
 // shorthand way to get the key from hashtable or defVal if not found
 #define kh_get_val(kname, hash, key, defVal) ({k=kh_get(kname, hash, key);(k!=kh_end(hash)?kh_val(hash,k):defVal);})
 

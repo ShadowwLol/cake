@@ -56,6 +56,28 @@ bool is_i32(const char * input){
     return false;
 }
 
+char * check_function(char ** str, size_t * index, const char * fn){
+    if (0 != strncmp(*str, fn, strlen(fn))){
+        return NULL;
+    }
+
+    /* Using function */
+    advance_parser(*str, index, strlen(fn));
+    if (*str[0] != '('){
+        return NULL;
+    }
+    advance_parser(*str, index, 1);
+
+    char * args = *str;
+    size_t i = 0;
+    while (0 != strncmp(*str, ");", 2) && *str[0] != '\0'){
+        advance_parser(*str, index, 1);
+        ++i;
+    }
+    args[i] = '\0';
+    return args;
+}
+
 /* Data Type hashtable */
 const int khstri = 33;
 KHASH_MAP_INIT_STR(khstri, int);
@@ -138,9 +160,8 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
 
 #endif
 
-    char * str = _fstr;
+    char * args;
     for (size_t i = 0; i <= sz && _fstr[0] != '\0'; ++i, ++_fstr){
-        _fstr = str+i;
         if (_fstr[0] == ';' || _fstr[0] == ')'){
             advance_parser(_fstr, i, 1);
         }
@@ -197,261 +218,79 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 var_n[index] = '\0';
                 kh_set(khstrs, h_value, var_n, "0"); // default all i32 to 0
             }
-        }else if (0 == strncmp("info(", _fstr, 5)){
-            advance_parser(_fstr, i, 5);
 
-            if (_fstr[0] == '\"'){
-                /* Printing string literal */
-                char * out = calloc(1, sizeof(char) * 1);
-                size_t o = 0;
-                advance_parser(_fstr, i, 1);
-                while (_fstr[0] != '\"' && _fstr[0] != '\0'){
-                    out = realloc(out, o+2);
-                    if (_fstr[0] == '\\'){
-                        advance_parser(_fstr, i, 1);
-                        switch (_fstr[0]){
-                            case 'n':
-                                out[o] = '\n';
-                                break;
-                            case 'r':
-                                out[o] = '\r';
-                                break;
-                            case 't':
-                                out[o] = '\t';
-                                break;
-                            case '_':
-                                out[o] = '_';
-                                break;
-                            case '\\':
-                                out[o] = '\\';
-                                break;
-                            case '\"':
-                                out[o] = '\"';
-                                break;
-                            case '\'':
-                                out[o] = '\'';
-                                break;
-                            default:
-                                if (isalnum(_fstr[0])){
-                                    out[o] = _fstr[0];
-                                }else{
-                                    printf("\n%s\n", _fstr);
-                                    printf("%0*d^\n", (int)i, ' ');
-                                    MEL_log(LOG_ERROR, "Invalid escape sequence");
-                                    return EX_F;
-                                }
-                        }
-                    }else{
-                        out[o] = _fstr[0];
-                    }
-                    advance_parser(_fstr, i, 1);
-                    ++o;
-                }
-                advance_parser(_fstr, i, 1);
-                MEL_log(LOG_INFORMATION, out);
-                free(out);
-                /* * * * * * * * * * * * * */
-            }
-        }else if (0 == strncmp("warn(", _fstr, 5)){
-            advance_parser(_fstr, i, 5);
+        /* Logging functions */
+        }else if ((args = check_function(&_fstr, &i, CK_LERR_KW))){
 
-            if (_fstr[0] == '\"'){
-                /* Printing string literal */
-                char * out = calloc(1, sizeof(char) * 1);
-                size_t o = 0;
-                advance_parser(_fstr, i, 1);
-                while (_fstr[0] != '\"' && _fstr[0] != '\0'){
-                    out = realloc(out, o+2);
-                    if (_fstr[0] == '\\'){
-                        advance_parser(_fstr, i, 1);
-                        switch (_fstr[0]){
-                            case 'n':
-                                out[o] = '\n';
-                                break;
-                            case 'r':
-                                out[o] = '\r';
-                                break;
-                            case 't':
-                                out[o] = '\t';
-                                break;
-                            case '_':
-                                out[o] = '_';
-                                break;
-                            case '\\':
-                                out[o] = '\\';
-                                break;
-                            case '\"':
-                                out[o] = '\"';
-                                break;
-                            case '\'':
-                                out[o] = '\'';
-                                break;
-                            default:
-                                if (isalnum(_fstr[0])){
-                                    out[o] = _fstr[0];
-                                }else{
-                                    printf("\n%s\n", _fstr);
-                                    printf("%0*d^\n", (int)i, ' ');
-                                    MEL_log(LOG_ERROR, "Invalid escape sequence");
-                                    return EX_F;
-                                }
-                        }
-                    }else{
-                        out[o] = _fstr[0];
-                    }
-                    advance_parser(_fstr, i, 1);
-                    ++o;
-                }
-                advance_parser(_fstr, i, 1);
-                MEL_log(LOG_WARNING, out);
-                free(out);
-                /* * * * * * * * * * * * * */
-            }
-        }else if (0 == strncmp("err(", _fstr, 4)){
-            advance_parser(_fstr, i, 4);
+            /* Escape sequences  */
+            CK_replace_str(args, "\\n", "\n");
+            CK_replace_str(args, "\\t", "\t");
+            CK_replace_str(args, "\\r", "\r");
+            /* * * * * * * * * * */
 
-            if (_fstr[0] == '\"'){
-                /* Printing string literal */
-                char * out = calloc(1, sizeof(char) * 1);
-                size_t o = 0;
-                advance_parser(_fstr, i, 1);
-                while (_fstr[0] != '\"' && _fstr[0] != '\0'){
-                    out = realloc(out, o+2);
-                    if (_fstr[0] == '\\'){
-                        advance_parser(_fstr, i, 1);
-                        switch (_fstr[0]){
-                            case 'n':
-                                out[o] = '\n';
-                                break;
-                            case 'r':
-                                out[o] = '\r';
-                                break;
-                            case 't':
-                                out[o] = '\t';
-                                break;
-                            case '_':
-                                out[o] = '_';
-                                break;
-                            case '\\':
-                                out[o] = '\\';
-                                break;
-                            case '\"':
-                                out[o] = '\"';
-                                break;
-                            case '\'':
-                                out[o] = '\'';
-                                break;
-                            default:
-                                if (isalnum(_fstr[0])){
-                                    out[o] = _fstr[0];
-                                }else{
-                                    printf("\n%s\n", _fstr);
-                                    printf("%0*d^\n", (int)i, ' ');
-                                    MEL_log(LOG_ERROR, "Invalid escape sequence");
-                                    return EX_F;
-                                }
-                        }
-                    }else{
-                        out[o] = _fstr[0];
-                    }
-                    advance_parser(_fstr, i, 1);
-                    ++o;
-                }
-                advance_parser(_fstr, i, 1);
-                MEL_log(LOG_ERROR, out);
-                free(out);
-                /* * * * * * * * * * * * * */
-            }
-        }else if (0 == strncmp("print(", _fstr, 6)){
-            advance_parser(_fstr, i, 6);
+            MEL_log(LOG_ERROR, args);
+        }else if ((args = check_function(&_fstr, &i, CK_LWRN_KW))){
 
-            if (_fstr[0] == '\"'){
-                /* Printing string literal */
-                advance_parser(_fstr, i, 1);
-                while (_fstr[0] != '\"' && _fstr[0] != '\0'){
-                    if (_fstr[0] == '\\'){
-                        advance_parser(_fstr, i, 1);
-                        switch (_fstr[0]){
-                            case 'n':
-                                putchar('\n');
-                                break;
-                            case 'r':
-                                putchar('\r');
-                                break;
-                            case 't':
-                                putchar('\t');
-                                break;
-                            case '_':
-                                putchar('_');
-                                break;
-                            case '\\':
-                                putchar('\\');
-                                break;
-                            case '\"':
-                                putchar('\"');
-                                break;
-                            case '\'':
-                                putchar('\'');
-                                break;
-                            default:
-                                if (isalnum(_fstr[0])){
-                                    putchar(_fstr[0]);
-                                }else{
-                                    printf("\n%s\n", _fstr);
-                                    printf("%0*d^\n", (int)i, ' ');
-                                    MEL_log(LOG_ERROR, "Invalid escape sequence");
-                                    return EX_F;
-                                }
-                        }
-                    }else{
-                        putchar(_fstr[0]);
-                    }
-                    advance_parser(_fstr, i, 1);
+            /* Escape sequences  */
+            CK_replace_str(args, "\\n", "\n");
+            CK_replace_str(args, "\\t", "\t");
+            CK_replace_str(args, "\\r", "\r");
+            /* * * * * * * * * * */
+
+            MEL_log(LOG_WARNING, args);
+        }else if ((args = check_function(&_fstr, &i, CK_LINF_KW))){
+
+            /* Escape sequences  */
+            CK_replace_str(args, "\\n", "\n");
+            CK_replace_str(args, "\\t", "\t");
+            CK_replace_str(args, "\\r", "\r");
+            /* * * * * * * * * * */
+
+            MEL_log(LOG_INFORMATION, args);
+        /* * * * * * * * * * */
+
+        }else if ((args = check_function(&_fstr, &i, CK_PRNT_KW))){
+
+            if (args[0] == '\"'){
+                /* Printing String Literal */
+
+                ++args;
+
+                /* Escape sequences  */
+                CK_replace_str(args, "\\n", "\n");
+                CK_replace_str(args, "\\t", "\t");
+                CK_replace_str(args, "\\r", "\r");
+                /* * * * * * * * * * */
+
+                while (args[0] != '\"' && args[0] != '\0'){
+                    putchar(args[0]);
+                    ++args;
                 }
-                advance_parser(_fstr, i, 1);
-                /* * * * * * * * * * * * * */
             }else{
-                /* Printing variable */
-                char * var_n = _fstr;
-                size_t index = 0;
-                while (_fstr[0] != ')' && _fstr[0] != ';' && _fstr[0] != '\0'){
-                    ++index;
-                    advance_parser(_fstr, i, 1);
-                }
-                var_n[index] = '\0';
-
-                // Retrieve the value for the specified key
-                k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
+                /* Printing Variable */
+                k = kh_get(khstri, h_datatype, args);  // first have to get ieter
                 if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
-                    MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}\n", var_n, curr_file);
+                    MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}\n", args, curr_file);
                     return EX_F;
                 } else {
                     printf("%s", kh_val(h_value,k)); // next have to fetch  the actual value
                 }
                 /* * * * * * * * * * */
             }
-            //printf("printing\n");
-        }else if (0 == strncmp("use(\"", _fstr, 5)){
-            advance_parser(_fstr, i, 5);
 
-            //printf("\n#####\nline:\"%s\"\n#####\n", _fstr);
-
-            char * filename = _fstr;
-            size_t index = 0;
-            while (_fstr[0] != '\"' && _fstr[0] != '\0'){
-                ++index;
-                advance_parser(_fstr, i, 1);
-            }
-            filename[index] = '\0';
-
-            //printf("FILENAME: \"%s\";\n", filename);
-            if (0 == strcmp(filename, curr_file)){
-                MEL_log(LOG_WARNING, "Unsafe recursive loop through file");
+        }else if ((args = check_function(&_fstr, &i, CK_CALL_KW))){
+            if (args[0] == '\"' && args[strlen(args)-1] == '\"'){
+                ++args;
+                args[strlen(args)-1] = '\0';
+                if (0 == strcmp(args, curr_file)){
+                    MEL_log(LOG_WARNING, "Unsafe recursive loop through file {%s}", curr_file);
+                    return EX_F;
+                }
+                interpret_file(args);
+            }else{
+                MEL_log(LOG_ERROR, "Missing \'\"\' at \"%s\" function in file {%s}", curr_file, CK_CALL_KW);
                 return EX_F;
             }
-            interpret_file(filename);
-
-            //printf("printing\n");
         }else{
             /* variable name? */
             char * var_n = _fstr;
