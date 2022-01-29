@@ -19,7 +19,7 @@ print("88888888\n");
 print("999999999\n");
 print("1010101010\n");
 
-i32 myint = 12;
+i8 myint = 5;
 print("myint is: ");
 print(myint);
 print("\n");
@@ -34,7 +34,7 @@ print("myint is: ");
 print(myint);
 print("\n");
 
-myint = 2000000000;
+myint = 100;
 print("myint is: ");
 print(myint);
 print("\n");

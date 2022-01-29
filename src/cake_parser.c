@@ -11,9 +11,9 @@ keywords:
 }
 
 typedef enum{
-    CK_UINT8_T = 0, CK_UINT32_T, CK_UINT64_T,
-    CK_INT8_T,  CK_INT32_T,  CK_INT64_T,
-    CK_STR_T, CK_CHAR_T,
+    CK_UINT8_T = 0, CK_UINT16_T, CK_UINT32_T, CK_UINT64_T,
+    CK_INT8_T,      CK_INT16_T, CK_INT32_T,  CK_INT64_T,
+    CK_STR_T,       CK_CHAR_T,
     CK_BOOL_T,
 } CK_DATATYPES;
 
@@ -21,6 +21,8 @@ char * CK_DATATYPES_TO_STR(int8_t datatype){
     switch (datatype){
         case CK_UINT8_T:
             return "ui8";
+        case CK_UINT16_T:
+            return "ui16";
         case CK_UINT32_T:
             return "ui32";
         case CK_UINT64_T:
@@ -28,6 +30,8 @@ char * CK_DATATYPES_TO_STR(int8_t datatype){
 
         case CK_INT8_T:
             return "i8";
+        case CK_INT16_T:
+            return "i16";
         case CK_INT32_T:
             return "i32";
         case CK_INT64_T:
@@ -44,16 +48,84 @@ char * CK_DATATYPES_TO_STR(int8_t datatype){
     }
 }
 
-bool is_i32(const char * input){
+bool is_int(const char * input){
     for (size_t i = 0; i < strlen(input); ++i){
         if (!isdigit(input[i])){ /* filters floats and strings */
             return false;
         }
     }
-    if (atoll(input) >= INT32_MIN && atoll(input) <= INT32_MAX){
-        return true;
+    return true;
+}
+
+bool is_intd(const char * input, uint8_t type){
+    if (!is_int(input)){
+        return false;
     }
+
+    int64_t sz = atoll(input);
+    switch (type){
+        case CK_INT8_T:
+            if (sz >= INT8_MIN && sz <= INT8_MAX){
+                return true;
+            }
+            break;
+        case CK_INT16_T:
+            if (sz >= INT16_MIN && sz <= INT16_MAX){
+                return true;
+            }
+            break;
+        case CK_INT32_T:
+            if (sz >= INT32_MIN && sz <= INT32_MAX){
+                return true;
+            }
+            break;
+        case CK_INT64_T:
+            if (sz >= INT64_MIN && sz <= INT64_MAX){
+                return true;
+            }
+            break;
+        default:
+            break;
+    }
+
     return false;
+}
+
+size_t is_in_str(const char * str, const char * cmp){
+    const size_t str_len = strlen(str);
+    const size_t cmp_len = strlen(cmp);
+
+    if (cmp_len > str_len){
+        return 0;
+    }
+
+    char * tmp = (char *)str;
+    for (size_t i = 0; i < str_len; ++i){
+        if (0 == strncmp(tmp, cmp, cmp_len)){
+            return i;
+        }
+        ++tmp;
+    }
+    return 0;
+}
+
+char * check_statement(char ** str, size_t * index, const char * statement){
+    if (0 != strncmp(*str, statement, strlen(statement))){
+        return NULL;
+    }
+
+    /* Using statement */
+    advance_parser(*str, index, strlen(statement));
+
+    char * next = *str;
+    size_t i = 0;
+    while (*str[0] != ';' && *str[0] != '\0'){
+        ++i;
+        advance_parser(*str, index, 1);
+    }
+    next[i] = '\0';
+
+    return next;
 }
 
 char * check_function(char ** str, size_t * index, const char * fn){
@@ -160,63 +232,155 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
 
 #endif
 
+    char * statement;
     char * args;
     for (size_t i = 0; i <= sz && _fstr[0] != '\0'; ++i, ++_fstr){
         if (_fstr[0] == ';' || _fstr[0] == ')'){
             advance_parser(_fstr, i, 1);
         }
 
-        if (0 == strncmp("i32", _fstr, 3)){
-            bool assigned = false;
+        if ((statement = check_statement(&_fstr, &i, "i8"))){
+            size_t eq = is_in_str(statement, "=");
+            char * var = statement;
 
-            advance_parser(_fstr, i, 3);
+            if (eq){
+                /* Assignment */
+                char * val = statement+eq+1;
+                var[eq] = '\0';
 
-            char * var_n = _fstr;
-            size_t index = 0;
-            while (_fstr[0] != ';' && _fstr[0] != '\0'){
-                if (_fstr[0] == '='){
-                    /* Assignment to a variable */
-                    advance_parser(_fstr, i, 1);
-                    var_n[index] = '\0';
-
-                    char * value = _fstr;
-                    index = 0;
-                    while (_fstr[0] != ';' && _fstr[0] != '\0'){
-                        ++index;
-                    advance_parser(_fstr, i, 1);
-                    }
-                    value[index] = '\0';
-                    if (!is_i32(value)){
-                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    if (!is_intd(val, CK_INT8_T)){
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
                         return EX_F;
                     }
-
-                    k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
-                    if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
-                        kh_set(khstri, h_datatype, var_n, CK_INT32_T);
-                        kh_set(khstrs, h_value, var_n, value);
-                    } else {
-                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
-                        return EX_F;
-                    }
-
-                    assigned = true;
-                    break;
+                    kh_set(khstri, h_datatype, var, CK_INT8_T);
+                    kh_set(khstrs, h_value, var, val);
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
                 }
-                ++index;
-                advance_parser(_fstr, i, 1);
+            }else{
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    kh_set(khstri, h_datatype, var, CK_INT8_T);
+                    kh_set(khstrs, h_value, var, "0");
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
+                }
             }
-            //k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
-            //if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
-            //    kh_set(khstri, h_datatype, var_n, CK_INT32_T);
-            //} else {
-            //    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
-            //    return EX_F;
-            //}
 
-            if (!assigned){
-                var_n[index] = '\0';
-                kh_set(khstrs, h_value, var_n, "0"); // default all i32 to 0
+        }else if ((statement = check_statement(&_fstr, &i, "i16"))){
+            size_t eq = is_in_str(statement, "=");
+            char * var = statement;
+
+            if (eq){
+                /* Assignment */
+                char * val = statement+eq+1;
+                var[eq] = '\0';
+
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    if (!is_intd(val, CK_INT16_T)){
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        return EX_F;
+                    }
+                    kh_set(khstri, h_datatype, var, CK_INT16_T);
+                    kh_set(khstrs, h_value, var, val);
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
+                }
+            }else{
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    kh_set(khstri, h_datatype, var, CK_INT16_T);
+                    kh_set(khstrs, h_value, var, "0");
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
+                }
+            }
+
+        }else if ((statement = check_statement(&_fstr, &i, "i32"))){
+            size_t eq = is_in_str(statement, "=");
+            char * var = statement;
+
+            if (eq){
+                /* Assignment */
+                char * val = statement+eq+1;
+                var[eq] = '\0';
+
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    if (!is_intd(val, CK_INT32_T)){
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        return EX_F;
+                    }
+                    kh_set(khstri, h_datatype, var, CK_INT32_T);
+                    kh_set(khstrs, h_value, var, val);
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
+                }
+            }else{
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    kh_set(khstri, h_datatype, var, CK_INT32_T);
+                    kh_set(khstrs, h_value, var, "0");
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
+                }
+            }
+
+        }else if ((statement = check_statement(&_fstr, &i, "i64"))){
+            size_t eq = is_in_str(statement, "=");
+            char * var = statement;
+
+            if (eq){
+                /* Assignment */
+                char * val = statement+eq+1;
+                var[eq] = '\0';
+
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    if (!is_intd(val, CK_INT64_T)){
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        return EX_F;
+                    }
+                    kh_set(khstri, h_datatype, var, CK_INT64_T);
+                    kh_set(khstrs, h_value, var, val);
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
+                }
+            }else{
+                k = kh_get(khstri, h_datatype, var);
+                if (k == kh_end(h_datatype)){
+                    /* Var not found */
+                    kh_set(khstri, h_datatype, var, CK_INT64_T);
+                    kh_set(khstrs, h_value, var, "0");
+                } else {
+                    /* Var found */
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    return EX_F;
+                }
             }
 
         /* Logging functions */
@@ -320,18 +484,10 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                         }
                        val[in] = '\0';
 
-                       bool a_failed = false;
-                       switch(kh_val(h_datatype, k)){
-                           case CK_INT32_T:
-                                if (!is_i32(val)){a_failed = true;}
-                                break;
-                           default:
-                               break;
-                        }
-                        if (a_failed){
+                       if (!is_intd(val, kh_val(h_datatype, k))){
                             MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned \"%s\" in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), val, curr_file);
                             return EX_F;
-                        }
+                       }
 
                        kh_set(khstrs, h_value, var_n, val);
                        break;
