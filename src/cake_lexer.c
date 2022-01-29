@@ -21,7 +21,7 @@ CK_FN lex_string(const char * filename, const char * fstr, const size_t sz, char
 
         if (!commenting){
             if (!inside_quotes){
-                if (!isspace(fstr[i])){
+                if (!isspace(fstr[i]) && fstr[i] != 0){
                     _fstr[j] = fstr[i];
                     ++j;
                 }
