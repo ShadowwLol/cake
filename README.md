@@ -21,6 +21,8 @@
 
 6. [After installation](#after-installation)
 
+7. [Contributions](#contributions)
+
 ---
 
 ### Current Features:
@@ -81,3 +83,8 @@ At this point you should have an executable named something similar to `cake.exe
 
 You can run a file.ck in release mode with the following command:
 * `./cake -i <file.ck>`
+
+---
+
+### Contributions:
+* [Gu1 Hyp3r](https://twitter.com/gu1_hyp3r) => Logo Designer
