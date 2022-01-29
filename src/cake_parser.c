@@ -252,14 +252,14 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 if (k == kh_end(h_datatype)){
                     /* Var not found */
                     if (!is_intd(val, CK_INT8_T)){
-                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT8_T), curr_file);
                         return EX_F;
                     }
                     kh_set(khstri, h_datatype, var, CK_INT8_T);
                     kh_set(khstrs, h_value, var, val);
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT8_T), curr_file);
                     return EX_F;
                 }
             }else{
@@ -270,7 +270,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     kh_set(khstrs, h_value, var, "0");
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT8_T), curr_file);
                     return EX_F;
                 }
             }
@@ -288,14 +288,14 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 if (k == kh_end(h_datatype)){
                     /* Var not found */
                     if (!is_intd(val, CK_INT16_T)){
-                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT16_T), curr_file);
                         return EX_F;
                     }
                     kh_set(khstri, h_datatype, var, CK_INT16_T);
                     kh_set(khstrs, h_value, var, val);
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT16_T), curr_file);
                     return EX_F;
                 }
             }else{
@@ -306,7 +306,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     kh_set(khstrs, h_value, var, "0");
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT16_T), curr_file);
                     return EX_F;
                 }
             }
@@ -324,14 +324,14 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 if (k == kh_end(h_datatype)){
                     /* Var not found */
                     if (!is_intd(val, CK_INT32_T)){
-                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT32_T), curr_file);
                         return EX_F;
                     }
                     kh_set(khstri, h_datatype, var, CK_INT32_T);
                     kh_set(khstrs, h_value, var, val);
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT32_T), curr_file);
                     return EX_F;
                 }
             }else{
@@ -342,7 +342,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     kh_set(khstrs, h_value, var, "0");
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT32_T), curr_file);
                     return EX_F;
                 }
             }
@@ -360,14 +360,14 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 if (k == kh_end(h_datatype)){
                     /* Var not found */
                     if (!is_intd(val, CK_INT64_T)){
-                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                        MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned wrong type in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT64_T), curr_file);
                         return EX_F;
                     }
                     kh_set(khstri, h_datatype, var, CK_INT64_T);
                     kh_set(khstrs, h_value, var, val);
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT64_T), curr_file);
                     return EX_F;
                 }
             }else{
@@ -378,7 +378,7 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     kh_set(khstrs, h_value, var, "0");
                 } else {
                     /* Var found */
-                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), curr_file);
+                    MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] already exists in file {%s}", var, CK_DATATYPES_TO_STR(CK_INT64_T), curr_file);
                     return EX_F;
                 }
             }
