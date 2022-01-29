@@ -4,7 +4,7 @@
 ### What's *cake*?
 *cake* is a programming language designed to be conventional as well as incredibly fast, natively available on [these platforms](#supported-platforms).
 
-[cake](cake.png)
+![cake](cake.png)
 
 ---
 
