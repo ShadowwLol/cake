@@ -129,12 +129,13 @@ char * check_statement(char ** str, size_t * index, const char * statement){
 }
 
 char * check_function(char ** str, size_t * index, const char * fn){
-    if (0 != strncmp(*str, fn, strlen(fn))){
+    const size_t fn_len = strlen(fn);
+    if (0 != strncmp(*str, fn, fn_len)){
         return NULL;
     }
 
     /* Using function */
-    advance_parser(*str, index, strlen(fn));
+    advance_parser(*str, index, fn_len);
     if (*str[0] != '('){
         return NULL;
     }
@@ -162,79 +163,12 @@ KHASH_MAP_INIT_STR(khstrs, char*);
 
 CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
    khiter_t k = 0;
-
    khash_t(khstri) * h_datatype = kh_init(khstri); // create a hashtable
    khash_t(khstrs) * h_value = kh_init(khstrs); // create a hashtable
 
-#if 0
-   kh_set(khStrInt, h, "jimbo", 99);
-   kh_set(khStrInt, h, "john haze", 98);
-   kh_set(khStrInt, h, "jaki joiner", 97);
-
-   // Retrieve the value for key "apple"
-   k = kh_get(khStrInt, h, "apple");  // first have to get ieter
-   if (k == kh_end(h)) {  // k will be equal to kh_end if key not present
-      printf("no key found for apple");
-   } else {
-      printf ("key at apple=%d\n", kh_val(h,k)); // next have to fetch  the actual value
-   }
-
-   // Retrieve the value for key "apple"
-   k = kh_get(khStrInt, h, "john haze");  // first have to get ieter
-   if (k == kh_end(h)) {  // k will be equal to kh_end if key not present
-      printf("no key found for john haze\n");
-   } else {
-      printf ("key at john haze=%d\n", kh_val(h,k)); // next have to fetch  the actual value
-   }
-
-   // retreive key for the key "not_present"
-   // which should print the error message
-   k = kh_get(khStrInt, h, "not_present");  // first have to get ieter
-   if (k == kh_end(h)) {  // k will be equal to kh_end if key not present
-      printf("no key found for not_present\n");
-   } else {
-      printf ("key at not_present=%d\n", kh_val(h,k)); // next have to fetch  the actual value
-   }
-
-   // shorthand method to get value that returns value found
-   // or specified default value if not present.
-   int tval = kh_get_val(khStrInt, h, "apple", -1);
-   printf ("shortcut tval for apple = %d\n", tval);
-
-   tval = kh_get_val(khStrInt, h, "john haze", -1);
-   printf ("shortcut tval for john haze = %d\n", tval);
-
-   // missing key should return default value of -1
-   tval = kh_get_val(khStrInt, h, "not_present", -1);
-   printf ("shortcut tval for not_present = %d\n", tval);
-
-   // Try to delete a key and then retrieve it
-   // to see if it is really gone.
-   k = kh_get(khStrInt, h, "john haze"); // get the ieterator
-   if (k != kh_end(h)) {  // if it is found
-      printf("deleting key john_haze\n");
-      kh_del(khStrInt, h, k);  // then delete it.
-   }
-   // now see if it is really gone
-   tval = tval = kh_get_val(khStrInt, h, "john haze", -1);
-   printf ("after delete tval for john haze = %d\n", tval);
-
-   // Ieterate the hash table by key, value and print out
-   // the values found.
-   printf("\nIeterate all keys\n");
-   for (k = kh_begin(h); k != kh_end(h); ++k) {
-      if (kh_exist(h, k)) {
-         const char *key = kh_key(h,k);
-         tval = kh_value(h, k);
-         printf("key=%s  val=%d\n", key, tval);
-      }
-   }
-
-#endif
-
     char * statement;
     char * args;
-    for (size_t i = 0; i <= sz && _fstr[0] != '\0'; ++i, ++_fstr){
+    for (size_t i = 0; i < sz && _fstr[0] != '\0';){
         if (_fstr[0] == ';' || _fstr[0] == ')'){
             advance_parser(_fstr, i, 1);
         }
@@ -427,6 +361,34 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 /* * * * * * * * * * */
 
                 while (args[0] != '\"' && args[0] != '\0'){
+                    if (0 == strncmp(args, "\\$", 2)){
+                        putchar('$');
+                        args += 2;
+                    }else if (0 == strncmp(args, "$(", 2)){
+                        args += 2;
+                        char * var = args;
+                        size_t index = 0;
+                        while (args[0] != ')' && args[0] != '\0'){
+                            ++index;
+                            ++args;
+                        }
+                        var[index] = '\0';
+
+                        if (strlen(var)){
+                            /* Printing Variable */
+                            k = kh_get(khstrs, h_value, var);  // first have to get ieter
+                            if (k == kh_end(h_value)) {  // k will be equal to kh_end if key not present
+                                MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}", var, curr_file);
+                                return EX_F;
+                            } else {
+                                printf("%s", kh_val(h_value, k));
+                            }
+                            /* * * * * * * * * * */
+                        }else{
+                            MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}", var, curr_file);
+                            return EX_F;
+                        }
+                    }
                     putchar(args[0]);
                     ++args;
                 }
@@ -437,11 +399,17 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                     MEL_log(LOG_ERROR, "Undefined variable named \"%s\" in file {%s}\n", args, curr_file);
                     return EX_F;
                 } else {
-                    printf("%s", kh_val(h_value,k)); // next have to fetch  the actual value
                 }
                 /* * * * * * * * * * */
             }
 
+        }else if ((args = check_function(&_fstr, &i, CK_WAIT_KW))){
+            if (is_int(args)){
+                sleep_ms(atoll(args));
+            }else{
+                MEL_log(LOG_ERROR, "Invalid \"%s()\" argument in file {%s}", CK_WAIT_KW, curr_file);
+                return EX_F;
+            }
         }else if ((args = check_function(&_fstr, &i, CK_CALL_KW))){
             if (args[0] == '\"' && args[strlen(args)-1] == '\"'){
                 ++args;
@@ -455,6 +423,12 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
                 MEL_log(LOG_ERROR, "Missing \'\"\' at \"%s\" function in file {%s}", curr_file, CK_CALL_KW);
                 return EX_F;
             }
+        }else if ((args = check_function(&_fstr, &i, CK_RETN_KW))){
+            if (is_int(args)){
+                return atoll(args);
+            }
+            MEL_log(LOG_ERROR, "Invalid \"%s()\" return value in file {%s}", CK_RETN_KW, curr_file);
+            return EX_F;
         }else{
             /* variable name? */
             char * var_n = _fstr;
@@ -465,62 +439,44 @@ CK_FN parse_string(const char * curr_file, char * _fstr, const size_t sz){
             }
             var_n[index] = '\0';
 
-            /* search through hashtable for variable name */
-            k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
-            if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
-                MEL_log(LOG_ERROR, "Undefined keyword \"%s\"[%d] in file {%s}\n", var_n, i, curr_file);
-                return EX_F;
-            } else {
-               /* Check for '=' or '+' or '-' [...] in _fstr[0] */
-               switch(_fstr[0]){
-                   case 0:
-                   case '=':
-                        advance_parser(_fstr, i, 1);
-                        char * val = _fstr;
-                        size_t in = 0;
-                        while (_fstr[0] != ';' && _fstr[0] != '\0'){
-                            ++in;
+            if (strlen(var_n)){
+                /* search through hashtable for variable name */
+                k = kh_get(khstri, h_datatype, var_n);  // first have to get ieter
+                if (k == kh_end(h_datatype)) {  // k will be equal to kh_end if key not present
+                    MEL_log(LOG_ERROR, "Undefined keyword \"%s\"[%d] in file {%s}\n", var_n, i, curr_file);
+                    return EX_F;
+                } else {
+                   /* Check for '=' or '+' or '-' [...] in _fstr[0] */
+                   switch(_fstr[0]){
+                       case 0:
+                       case '=':
                             advance_parser(_fstr, i, 1);
-                        }
-                       val[in] = '\0';
+                            char * val = _fstr;
+                            size_t in = 0;
+                            while (_fstr[0] != ';' && _fstr[0] != '\0'){
+                                ++in;
+                                advance_parser(_fstr, i, 1);
+                            }
+                           val[in] = '\0';
 
-                       if (!is_intd(val, kh_val(h_datatype, k))){
-                            MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned \"%s\" in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), val, curr_file);
-                            return EX_F;
-                       }
+                           if (!is_intd(val, kh_val(h_datatype, k))){
+                                MEL_log(LOG_ERROR, "Variable \"%s\" of type [%s] assigned \"%s\" in file {%s}", var_n, CK_DATATYPES_TO_STR(kh_val(h_datatype, k)), val, curr_file);
+                                return EX_F;
+                           }
 
-                       kh_set(khstrs, h_value, var_n, val);
-                       break;
-                   default:
-                       break;
-               }
+                           kh_set(khstrs, h_value, var_n, val);
+                           break;
+                       default:
+                           break;
+                   }
+                }
             }
         }
+        advance_parser(_fstr, i, 1);
     }
    // cleanup and remove our hashtable
    kh_destroy(khstri, h_datatype);
    kh_destroy(khstrs, h_value);
 
-#if 0
-    //printf("\n\n%s", get_line(_fstr, sz));
-
-    size_t line_count = get_line_count(_fstr, sz);
-
-    for (size_t i = 0; i < line_count; ++i){
-        char * line = get_line(_fstr, sz, i);
-        printf("%s\n", line);
-    }
-    char line[sz];
-    for (size_t i = 0; i < sz; ++i){
-        printf("%s\n", CK_substr((char *)_fstr, i, 7));
-        if (strncmp("print(\"", CK_substr((char *)_fstr, i, 7), 7) == 0){
-            i += 7;
-            while (_fstr[i] != '\"' && _fstr[i] != '\0'){
-                putchar(_fstr[i]);
-                ++i;
-            }
-        }
-    }
-#endif
     return EX_S;
 }

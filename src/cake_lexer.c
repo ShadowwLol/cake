@@ -1,12 +1,45 @@
 #include "../include/cake.h"
 
-CK_FN lex_string(const char * filename, const char * fstr, const size_t sz, char * _fstr){
-    //char _fstr[sz];
+bool is_from_A_to_Z(const char c){
+    switch(tolower(c)){
+        case 'a':
+        case 'b':
+        case 'c':
+        case 'd':
+        case 'e':
+        case 'f':
+        case 'g':
+        case 'h':
+        case 'i':
+        case 'j':
+        case 'k':
+        case 'l':
+        case 'm':
+        case 'n':
+        case 'o':
+        case 'p':
+        case 'q':
+        case 'r':
+        case 's':
+        case 't':
+        case 'u':
+        case 'v':
+        case 'w':
+        case 'x':
+        case 'y':
+        case 'z':
+            return true;
+        default:
+            return false;
+    }
+}
+
+size_t lex_string(const char * filename, char * fstr, const size_t sz){
     size_t j = 0;
     bool commenting = false;
     bool inside_quotes = false;
 
-    /* LEXING */
+    /* Lexing */
     for (size_t i = 0; i < sz; ++i){
         if (fstr[i] == '/' && fstr[++i] == '/'){
             commenting = true;
@@ -21,21 +54,25 @@ CK_FN lex_string(const char * filename, const char * fstr, const size_t sz, char
 
         if (!commenting){
             if (!inside_quotes){
-                if (!isspace(fstr[i]) && fstr[i] != 0){
-                    _fstr[j] = fstr[i];
+                if (!isspace(fstr[i])){
+                    fstr[j] = fstr[i];
                     ++j;
                 }
             }else{
-                _fstr[j] = fstr[i];
+                fstr[j] = fstr[i];
                 ++j;
             }
         }
     }
-    _fstr[j] = '\0';
-    CK_replace_str(_fstr, "_here()", filename);
+
+    for (size_t l = j; l < sz; ++l){
+        fstr[l] = '\0';
+    }
+    ++j;
+    CK_replace_str(fstr, "_here()", filename);
     /* * * * * */
 
-    return EX_S;
+    return j;
 }
 
 CK_FN parse_file(const char * filename){

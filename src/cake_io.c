@@ -74,7 +74,7 @@ size_t CK_get_file_size(const char * f_name){
 char * CK_read_file(const char * f_name, size_t * f_size) {
     char * buffer;
     size_t length;
-    FILE * f = fopen(f_name, "rb");
+    FILE * f = fopen(f_name, "r");
     size_t read_length;
 
     if (f) {
@@ -88,7 +88,7 @@ char * CK_read_file(const char * f_name, size_t * f_size) {
             return NULL;
         }
 
-        buffer = (char *)malloc(length + 1);
+        buffer = (char *)calloc(length + 1, sizeof(char));
 
         if (length) {
             read_length = fread(buffer, 1, length, f);

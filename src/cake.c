@@ -10,12 +10,11 @@ CK_FN interpret_file(const char * filename){
         return EX_F;
     }
 
-    char _file[sz];
-    lex_string(filename, file, sz, _file);
-    free(file);
+    size_t s = lex_string(filename, file, sz);
 
-    parse_string(filename, _file, sz);
-    return EX_S;
+    int64_t ret = parse_string(filename, file, s);
+    free(file);
+    return ret;
 }
 
 int main(int argc, char * argv[]){
@@ -38,8 +37,7 @@ int main(int argc, char * argv[]){
                 break;
 			case 'i':
 				/* Interpret */
-                interpret_file(optarg);
-				break;
+                return interpret_file(optarg);
 			default:
 				CK_USAGE();
 				return EX_F;
