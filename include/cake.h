@@ -12,4 +12,6 @@
 #define EX_S (0)
 #define EX_F (255)
 
+#define _CAKE_DEBUG
+
 #endif
