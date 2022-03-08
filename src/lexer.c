@@ -101,8 +101,10 @@ static token_type_t identifier_type(void){
 							switch (lexer.start[2]){
 								case 'c': return check_keyword(3, 4, "lude", TOKEN_INCLUDE);
 							}
+						}else{
+							return TOKEN_IN;
 						}
-						return TOKEN_IN;
+						return TOKEN_IDENTIFIER;
 				}
 			}
 			break;
