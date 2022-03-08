@@ -7,7 +7,7 @@
 
 typedef enum {
 	LOG_WARNING, LOG_SUCCESS, LOG_ERROR, LOG_INFORMATION
-} logging;
+} logs;
 
 #if __WIN32
 #include <windef.h>
@@ -51,84 +51,45 @@ inline static void MEL_clear_color(){
 
 static void MEL_set_color(const char * TERM_COLOR);
 inline static void MEL_set_color(const char * TERM_COLOR){
-	printf("%s", TERM_COLOR);
+	if (isatty(STDOUT_FILENO)){
+		printf("%s", TERM_COLOR);
+	}
 }
 
 static void MEL_clear_color();
 inline static void MEL_clear_color(){
-	printf("\033[0m");
+	if (isatty(STDOUT_FILENO)){
+		printf("\033[0m");
+	}
 }
 
 #endif
 
-static void MEL_log(int, const char *, ...);
+static void MEL_log(logs, const char *, ...);
 
-inline static void MEL_log(int l, const char * format, ...){
-#if __WIN32
-    switch(l){
-        case LOG_WARNING:
-            MEL_set_color(TERM_YELLOW);
-            fprintf(stdout, "[!] ");
-            break;
-        case LOG_SUCCESS:
-            MEL_set_color(TERM_GREEN);
-            fprintf(stdout, "[+] ");
-            break;
-        case LOG_ERROR:
-            MEL_set_color(TERM_RED);
-            fprintf(stdout, "[-] ");
-            break;
-        case LOG_INFORMATION:
-            MEL_set_color(TERM_BLUE);
-            fprintf(stdout, "[#] ");
-            break;
-        default:
-            break;
-    }
-    MEL_clear_color();
-#else
-    if (isatty(STDOUT_FILENO)){
-		switch(l){
-    	    case LOG_WARNING:
-    	        MEL_set_color(TERM_YELLOW);
-    	        fprintf(stdout, "[!] ");
-    	        break;
-    	    case LOG_SUCCESS:
-    	        MEL_set_color(TERM_GREEN);
-    	        fprintf(stdout, "[+] ");
-    	        break;
-    	    case LOG_ERROR:
-    	        MEL_set_color(TERM_RED);
-    	        fprintf(stdout, "[-] ");
-    	        break;
-    	    case LOG_INFORMATION:
-    	        MEL_set_color(TERM_BLUE);
-    	        fprintf(stdout, "[#] ");
-    	        break;
-    	    default:
-    	        break;
-    	}
-        MEL_clear_color();
-	}else{
-		switch(l){
-    	    case LOG_WARNING:
-    	        fprintf(stdout, "[!] ");
-    	        break;
-    	    case LOG_SUCCESS:
-    	        fprintf(stdout, "[+] ");
-    	        break;
-    	    case LOG_ERROR:
-    	        fprintf(stdout, "[-] ");
-				break;
-    	    case LOG_INFORMATION:
-                MEL_set_color(TERM_BLUE);
-    	        fprintf(stdout, "[#] ");
-    	        break;
-    	    default:
-    	        break;
-    	}
+inline static void MEL_log(logs l, const char * format, ...){
+	switch(l){
+		case LOG_WARNING:
+			MEL_set_color(TERM_YELLOW);
+			fprintf(stdout, "[!] ");
+			break;
+		case LOG_SUCCESS:
+			MEL_set_color(TERM_GREEN);
+			fprintf(stdout, "[+] ");
+			break;
+		case LOG_ERROR:
+			MEL_set_color(TERM_RED);
+			fprintf(stdout, "[-] ");
+			break;
+		case LOG_INFORMATION:
+			MEL_set_color(TERM_BLUE);
+			fprintf(stdout, "[#] ");
+			break;
+		default:
+			break;
 	}
-#endif
+	MEL_clear_color();
+
 	va_list args;
 	va_start(args, format);
 	vfprintf(stdout, format, args);
