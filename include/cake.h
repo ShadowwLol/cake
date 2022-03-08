@@ -1,6 +1,7 @@
 #ifndef _CAKE_H
 #define _CAKE_H
 
+#include <ctype.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>

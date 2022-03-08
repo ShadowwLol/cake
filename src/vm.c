@@ -1,5 +1,7 @@
-#include "../include/vm.h"
 #include "../include/cake.h"
+#include "../include/compiler.h"
+#include "../include/vm.h"
+
 #include "../include/debug.h"
 
 vm_t vm;
@@ -80,10 +82,9 @@ static interpret_result run(void){
 #undef READ_BYTE
 }
 
-interpret_result interpret(chunk_t * chunk){
-	vm.chunk = chunk;
-	vm.ip = vm.chunk->bytes;
-	return run();
+interpret_result interpret(const char * source){
+	compile(source);
+	return INTERPRET_OK;
 }
 
 void free_vm(void){

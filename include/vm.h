@@ -20,7 +20,7 @@ typedef struct{
 } vm_t;
 
 void init_vm(void);
-interpret_result interpret(chunk_t * chunk);
+interpret_result interpret(const char * source);
 void free_vm(void);
 
 void push(value_t value);
