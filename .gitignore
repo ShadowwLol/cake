@@ -1,12 +1,2 @@
 build/cake*
-build/CMakeLists.txt.user
-build/CMakeCache.txt
-build/CMakeFiles
-build/CMakeScripts
-build/Testing
-build/Makefile
-build/cmake_install.cmake
-build/install_manifest.txt
-build/compile_commands.json
-build/CTestTestfile.cmake
-build/_deps
+build/buildsh/
