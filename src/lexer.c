@@ -29,7 +29,7 @@ static bool match(char expected){
 	return true;
 }
 
-static token_t make_token(token_type_t type){
+static token_t make_token(ttype_t type){
 	token_t token = {
 		.type = type,
 		.start = lexer.start,
@@ -70,7 +70,7 @@ static void skip_whitespace(void){
 	}
 }
 
-static token_type_t check_keyword(uint16_t start, uint16_t length, const char * rest, token_type_t type){
+static ttype_t check_keyword(uint16_t start, uint16_t length, const char * rest, ttype_t type){
 	if ((lexer.current - lexer.start) == (start + length) && memcmp(lexer.start + start, rest, length) == 0){
 		return type;
 	}
@@ -78,7 +78,7 @@ static token_type_t check_keyword(uint16_t start, uint16_t length, const char * 
 	return TOKEN_IDENTIFIER;
 }
 
-static token_type_t identifier_type(void){
+static ttype_t identifier_type(void){
 	switch(lexer.start[0]){
 		case 'a': return check_keyword(1, 2, "nd",    TOKEN_AND);
 		case 'c': return check_keyword(1, 2, "lass",  TOKEN_CLASS);
@@ -197,6 +197,7 @@ token_t scan_token(void){
 		case '/': return make_token(TOKEN_SLASH);
 		case '*': return make_token(TOKEN_STAR);
 		case '%': return make_token(TOKEN_PERCENT);
+		case '|': return make_token(TOKEN_COLUMN);
 		case '!': return make_token(match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
 		case '=': return make_token(match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
 		case '<': return make_token(match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);

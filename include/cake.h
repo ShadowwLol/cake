@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "MEL_IO.h"
 #include "MEL_logs.h"
@@ -13,6 +14,6 @@
 #define EX_S (0)
 #define EX_F (255)
 
-#define _CAKE_DEBUG
+//#define _CAKE_DEBUG
 
 #endif

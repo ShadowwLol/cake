@@ -8,7 +8,7 @@ typedef enum {
 	TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
 	TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
 	TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
-	TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR, TOKEN_PERCENT,
+	TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR, TOKEN_PERCENT, TOKEN_COLUMN,
 
 	/* One or two character tokens */
 	TOKEN_BANG, TOKEN_BANG_EQUAL,
@@ -27,10 +27,10 @@ typedef enum {
 	TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE,
 
 	TOKEN_ERROR, TOKEN_EOF
-} token_type_t;
+} ttype_t;
 
 typedef struct{
-	token_type_t type;
+	ttype_t type;
 	const char * start;
 	size_t length;
 	uint64_t line;

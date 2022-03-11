@@ -37,6 +37,9 @@ static interpret_result run(void){
 		putchar('\n');
 		disassemble_instruction(vm.chunk, (uint64_t)(vm.ip - vm.chunk->bytes));
 #endif
+
+		bool modulus = false;
+
 		uint8_t instruction;
 		switch(instruction = READ_BYTE()){
 			case OP_CONSTANT:
@@ -55,9 +58,13 @@ static interpret_result run(void){
 			case OP_DIVIDE:
 				BINARY_OP(/);
 				break;
-			case OP_MODULUS:{
+			case OP_REMAINDER:{
 				int32_t b = pop();
 				vm.stack[vm.stack_count - 1] = (int32_t)vm.stack[vm.stack_count - 1] % b;
+				break;
+			}
+			case OP_MODULUS:{
+				vm.stack[vm.stack_count - 1] = fabs(vm.stack[vm.stack_count - 1]);
 				break;
 			}
 			case OP_INCREMENT:
@@ -83,8 +90,20 @@ static interpret_result run(void){
 }
 
 interpret_result interpret(const char * source){
-	compile(source);
-	return INTERPRET_OK;
+	chunk_t chunk = init_chunk();
+
+	if (!compile(source, &chunk)){
+		free_chunk(&chunk);
+		return INTERPRET_COMPILE_ERROR;
+	}
+
+	vm.chunk = &chunk;
+	vm.ip = vm.chunk->bytes;
+
+	interpret_result result = run();
+
+	free_chunk(&chunk);
+	return result;
 }
 
 void free_vm(void){

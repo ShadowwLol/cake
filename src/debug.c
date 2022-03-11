@@ -60,6 +60,8 @@ uint64_t disassemble_instruction(chunk_t * chunk, uint64_t offset){
 			return simple_instruction("OP_MULTIPLY", offset);
 		case OP_DIVIDE:
 			return simple_instruction("OP_DIVIDE", offset);
+		case OP_REMAINDER:
+			return simple_instruction("OP_REMAINDER", offset);
 		case OP_MODULUS:
 			return simple_instruction("OP_MODULUS", offset);
 		case OP_INCREMENT:
