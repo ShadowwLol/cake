@@ -23,6 +23,7 @@ void init_vm(void);
 interpret_result interpret(const char * source);
 void free_vm(void);
 
+bool values_equal(value_t val1, value_t val2);
 void push(value_t value);
 value_t pop(void);
 
