@@ -5,11 +5,13 @@ DDEFINES="-D_CAKE_DEBUG"
 case "$1" in
 "--debug"|"-d")
 printf "[+] Debug mode\n"
-CFLAGS="-O -g -std=c99 $DDEFINES -Wextra -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS -fstack-clash-protection -Wshadow -Wformat=2 -Wformat-truncation -Wformat-overflow -fno-common -fstack-usage"
+LFLAGS="-g"
+CFLAGS="-O $LFLAGS -std=c99 $DDEFINES -Wextra -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS -fstack-clash-protection -Wshadow -Wformat=2 -Wformat-truncation -Wformat-overflow -fno-common -fstack-usage"
 ;;
 *)
 printf "[+] Release mode\n"
-CFLAGS="-static-libgcc -std=c99 $DEFINES -O3 -Wextra -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS -fstack-clash-protection -Wshadow -Wformat=2 -Wformat-truncation -Wformat-overflow -fno-common -fstack-usage"
+LFLAGS="-static -static-libgcc"
+CFLAGS="$LFLAGS -std=c99 $DEFINES -O3 -Wextra -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS -fstack-clash-protection -Wshadow -Wformat=2 -Wformat-truncation -Wformat-overflow -fno-common -fstack-usage"
 ;;
 esac
 
@@ -60,4 +62,4 @@ done
 cd ..
 
 printf "$CC buildsh/*.o -o $EXE\n"
-$CC $(find buildsh/*.o) -o "$EXE"
+$CC $(find buildsh/*.o) $LFLAGS -o "$EXE"
