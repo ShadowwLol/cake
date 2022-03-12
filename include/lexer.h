@@ -1,0 +1,42 @@
+#ifndef _LEXER_H
+#define _LEXER_H
+
+#include "cake.h"
+
+typedef enum {
+	/* Single-character tokens */
+	TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN,
+	TOKEN_LEFT_BRACE, TOKEN_RIGHT_BRACE,
+	TOKEN_COMMA, TOKEN_DOT, TOKEN_MINUS, TOKEN_PLUS,
+	TOKEN_SEMICOLON, TOKEN_SLASH, TOKEN_STAR, TOKEN_PERCENT, TOKEN_COLUMN,
+
+	/* One or two character tokens */
+	TOKEN_BANG, TOKEN_BANG_EQUAL,
+	TOKEN_EQUAL, TOKEN_EQUAL_EQUAL,
+	TOKEN_GREATER, TOKEN_GREATER_EQUAL,
+	TOKEN_LESS, TOKEN_LESS_EQUAL,
+	TOKEN_PLUS_PLUS, TOKEN_MINUS_MINUS,
+
+	/* Literals */
+	TOKEN_IDENTIFIER, TOKEN_STRING, TOKEN_NUMBER,
+
+	/* Keywords */
+	TOKEN_AND, TOKEN_CLASS, TOKEN_ELSE, TOKEN_FALSE,
+	TOKEN_FOR, TOKEN_FN, TOKEN_IF, TOKEN_IN, TOKEN_INCLUDE, TOKEN_NIL, TOKEN_OR,
+	TOKEN_PRINT, TOKEN_RETURN, TOKEN_SUPER, TOKEN_THIS,
+	TOKEN_TRUE, TOKEN_VAR, TOKEN_WHILE,
+
+	TOKEN_ERROR, TOKEN_EOF
+} ttype_t;
+
+typedef struct{
+	ttype_t type;
+	const char * start;
+	size_t length;
+	uint64_t line;
+} token_t;
+
+void init_lexer(const char * source);
+token_t scan_token();
+
+#endif
