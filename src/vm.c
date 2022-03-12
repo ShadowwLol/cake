@@ -10,10 +10,16 @@ static void reset_stack(void){
 	vm.stack_count = 0;
 }
 
-void init_vm(void){
+void reset_vm(void){
 	vm.stack = NULL;
 	vm.stack_capacity = 0;
 	reset_stack();
+}
+
+void init_vm(void){
+	reset_vm();
+	vm.stack_capacity = 1024;
+	vm.stack = GROW_ARRAY(value_t, vm.stack, 0, vm.stack_capacity);
 }
 
 static interpret_result run(void){
@@ -27,8 +33,8 @@ static interpret_result run(void){
 
 	while (1){
 #ifdef _CAKE_DEBUG
+		char * prefix = "";
 		for (value_t * slot = vm.stack; slot < (vm.stack + vm.stack_count); ++slot){
-			char * prefix = "";
 			printf("%s[", prefix);
 			print_value(*slot);
 			putchar(']');
@@ -37,9 +43,6 @@ static interpret_result run(void){
 		putchar('\n');
 		disassemble_instruction(vm.chunk, (uint64_t)(vm.ip - vm.chunk->bytes));
 #endif
-
-		bool modulus = false;
-
 		uint8_t instruction;
 		switch(instruction = READ_BYTE()){
 			case OP_CONSTANT:
@@ -74,7 +77,7 @@ static interpret_result run(void){
 				--vm.stack[vm.stack_count - 1];
 				break;
 			case OP_NEGATE:
-				vm.stack[vm.stack_count - 1] *= -1;
+				vm.stack[vm.stack_count - 1] = -vm.stack[vm.stack_count - 1];
 				break;
 			case OP_RETURN:{
 				print_value(pop());
@@ -108,7 +111,7 @@ interpret_result interpret(const char * source){
 
 void free_vm(void){
 	FREE_ARRAY(value_t, vm.stack, vm.stack_capacity);
-	init_vm();
+	reset_vm();
 }
 
 void push(value_t value){
