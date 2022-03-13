@@ -17,7 +17,11 @@ typedef struct{
 	uint64_t stack_count;
 	uint64_t stack_capacity;
 	value_t * stack;
+
+	obj_t * objects;
 } vm_t;
+
+extern vm_t vm;
 
 void init_vm(void);
 interpret_result interpret(const char * source);

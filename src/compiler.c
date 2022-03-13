@@ -203,6 +203,10 @@ static void number(void){
 	emit_constant(NUMBER_VAL(strtod(parser.previous.start, NULL)));
 }
 
+static void string(void){
+	emit_constant(OBJ_VAL(copy_str(parser.previous.start + 1, parser.previous.length - 2)));
+}
+
 static void unary(void){
 	ttype_t op = parser.previous.type;
 
@@ -240,9 +244,9 @@ prule_t rules[] = {
 	[TOKEN_PERCENT]       = {NULL,     binary, PREC_FACTOR},
 	[TOKEN_COLUMN]        = {unary,    NULL,   PREC_NONE},
 	[TOKEN_BANG]          = {unary,    NULL,   PREC_NONE},
-	[TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
 	[TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-	/* Assignment  */
+	/* Comparison  */
+	[TOKEN_BANG_EQUAL]    = {NULL,     binary, PREC_EQUALITY},
 	[TOKEN_EQUAL_EQUAL]   = {NULL,     binary, PREC_EQUALITY},
 	[TOKEN_GREATER]       = {NULL,     binary, PREC_COMPARISON},
 	[TOKEN_GREATER_EQUAL] = {NULL,     binary, PREC_COMPARISON},
@@ -250,7 +254,7 @@ prule_t rules[] = {
 	[TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
 	/* * * * * * * */
 	[TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
-	[TOKEN_STRING]        = {NULL,     NULL,   PREC_NONE},
+	[TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
 	[TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
 	[TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
 	[TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
