@@ -3,6 +3,7 @@
 
 #include "chunk.h"
 #include "value.h"
+#include "table.h"
 
 typedef enum{
 	INTERPRET_OK,
@@ -18,6 +19,7 @@ typedef struct{
 	uint64_t stack_capacity;
 	value_t * stack;
 
+	table_t strings;
 	obj_t * objects;
 } vm_t;
 

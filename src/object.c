@@ -13,17 +13,45 @@ static obj_t * allocate_obj(size_t size, otype_t type){
 	return obj;
 }
 
-ostr_t * heap_str(uint64_t length){
-	ostr_t * str = (ostr_t *)allocate_obj(sizeof(ostr_t) + length + 1, OBJ_STRING);
+static uint32_t hash_str(const char* key, uint64_t length) {
+	uint32_t hash = 2166136261u;
+	for (uint64_t i = 0; i < length; i++) {
+		hash ^= (uint8_t)key[i];
+		hash *= 16777619;
+	}
+	return hash;
+}
+
+static ostr_t * alloc_str(char * buffer, uint64_t length, uint32_t hash){
+	ostr_t * str = ALLOCATE_OBJ(ostr_t, OBJ_STRING);
 	str->length = length;
+	str->buffer = buffer;
+	str->hash = hash;
+	set_table(&vm.strings, str, NIL_VAL);
 	return str;
 }
 
 ostr_t * copy_str(const char * buffer, uint64_t length){
-	ostr_t * str = heap_str(length);
-	memcpy(str->buffer, buffer, length);
-	str->buffer[length] = '\0';
-	return str;
+	uint32_t hash = hash_str(buffer, length);
+	ostr_t * interned = table_find_str(&vm.strings, buffer, length, hash);
+	if (interned != NULL){
+		return interned;
+	}
+
+	char * heap = ALLOCATE(char, length + 1);
+	memcpy(heap, buffer, length);
+	heap[length] = '\0';
+	return alloc_str(heap, length, hash);
+}
+
+ostr_t * take_str(char * buffer, uint64_t length){
+	uint32_t hash = hash_str(buffer, length);
+	ostr_t * interned = table_find_str(&vm.strings, buffer, length, hash);
+	if (interned != NULL){
+		FREE_ARRAY(char, buffer, length + 1);
+		return interned;
+	}
+	return alloc_str(buffer, length, hash);
 }
 
 void print_object(value_t value){

@@ -1,6 +1,7 @@
 #include "../include/cake.h"
 #include "../include/compiler.h"
 #include "../include/vm.h"
+#include "../include/table.h"
 
 #include "../include/object.h"
 #include "../include/debug.h"
@@ -13,10 +14,10 @@ static void reset_stack(void){
 
 void reset_vm(void){
 	vm.stack = NULL;
-
 	reset_stack();
-
 	vm.stack_capacity = 0;
+
+	vm.strings = init_table();
 	vm.objects = NULL;
 }
 
@@ -36,12 +37,14 @@ static void concatenate(void){
 	ostr_t * a = AS_STRING(pop());
 
 	uint64_t length = a->length + b->length;
-	ostr_t * buffer = heap_str(length);
-	memcpy(buffer->buffer, a->buffer, a->length);
-	memcpy(buffer->buffer + a->length, b->buffer, b->length);
-	buffer->buffer[length] = '\0';
+	char * buffer = ALLOCATE(char, length + 1);
 
-	push(OBJ_VAL(buffer));
+	memcpy(buffer, a->buffer, a->length);
+	memcpy(buffer + a->length, b->buffer, b->length);
+	buffer[length] = '\0';
+
+	ostr_t * result = take_str(buffer, length);
+	push(OBJ_VAL(result));
 }
 
 static value_t peek(int64_t distance){
@@ -213,6 +216,7 @@ interpret_result interpret(const char * source){
 
 void free_vm(void){
 	FREE_ARRAY(value_t, vm.stack, vm.stack_capacity);
+	free_table(&vm.strings);
 	free_objects();
 	reset_vm();
 }
@@ -229,11 +233,8 @@ bool values_equal(value_t val1, value_t val2){
 			return AS_BOOL(val1) == AS_BOOL(val2);
 		case VAL_NUMBER:
 			return AS_NUMBER(val1) == AS_NUMBER(val2);
-		case VAL_OBJ:{
-			ostr_t * str1 = AS_STRING(val1);
-			ostr_t * str2 = AS_STRING(val2);
-			return str1->length == str2->length && memcmp(str1->buffer, str2->buffer, str1->length) == 0;
-		}
+		case VAL_OBJ:
+			return AS_OBJ(val1) == AS_OBJ(val2);
 		default:
 			return false;
 	}
