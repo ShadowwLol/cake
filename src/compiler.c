@@ -204,7 +204,7 @@ static void number(void){
 }
 
 static void string(void){
-	emit_constant(OBJ_VAL(copy_str(parser.previous.start + 1, parser.previous.length - 2)));
+	emit_constant(OBJ_VAL(copy_str(false, parser.previous.start + 1, parser.previous.length - 2)));
 }
 
 static void unary(void){

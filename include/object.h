@@ -22,8 +22,9 @@ struct obj_t{
 
 struct ostr_t{
 	obj_t obj;
+	bool owns_buffer;
 	uint64_t length;
-	char * buffer;
+	const char * buffer;
 	uint32_t hash;
 };
 
@@ -31,9 +32,7 @@ static inline bool is_obj_type(value_t value, otype_t type){
 	return IS_OBJ(value) && AS_OBJ(value)->type == type;
 }
 
-ostr_t * take_str(char * buffer, uint64_t length);
-ostr_t * heap_str(uint64_t length);
-ostr_t * copy_str(const char * buffer, uint64_t length);
+ostr_t * copy_str(bool owns_buffer, const char * buffer, uint64_t length);
 
 void print_object(value_t value);
 

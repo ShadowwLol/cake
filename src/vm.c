@@ -43,7 +43,7 @@ static void concatenate(void){
 	memcpy(buffer + a->length, b->buffer, b->length);
 	buffer[length] = '\0';
 
-	ostr_t * result = take_str(buffer, length);
+	ostr_t * result = copy_str(true, buffer, length);
 	push(OBJ_VAL(result));
 }
 
@@ -216,8 +216,8 @@ interpret_result interpret(const char * source){
 
 void free_vm(void){
 	FREE_ARRAY(value_t, vm.stack, vm.stack_capacity);
-	free_table(&vm.strings);
 	free_objects();
+	free_table(&vm.strings);
 	reset_vm();
 }
 

@@ -22,8 +22,9 @@ static uint32_t hash_str(const char* key, uint64_t length) {
 	return hash;
 }
 
-static ostr_t * alloc_str(char * buffer, uint64_t length, uint32_t hash){
+static ostr_t * alloc_str(bool owns_buffer, char * buffer, uint64_t length, uint32_t hash){
 	ostr_t * str = ALLOCATE_OBJ(ostr_t, OBJ_STRING);
+	str->owns_buffer = owns_buffer;
 	str->length = length;
 	str->buffer = buffer;
 	str->hash = hash;
@@ -31,33 +32,20 @@ static ostr_t * alloc_str(char * buffer, uint64_t length, uint32_t hash){
 	return str;
 }
 
-ostr_t * copy_str(const char * buffer, uint64_t length){
+ostr_t * copy_str(bool owns_buffer, const char * buffer, uint64_t length){
 	uint32_t hash = hash_str(buffer, length);
 	ostr_t * interned = table_find_str(&vm.strings, buffer, length, hash);
 	if (interned != NULL){
 		return interned;
 	}
 
-	char * heap = ALLOCATE(char, length + 1);
-	memcpy(heap, buffer, length);
-	heap[length] = '\0';
-	return alloc_str(heap, length, hash);
-}
-
-ostr_t * take_str(char * buffer, uint64_t length){
-	uint32_t hash = hash_str(buffer, length);
-	ostr_t * interned = table_find_str(&vm.strings, buffer, length, hash);
-	if (interned != NULL){
-		FREE_ARRAY(char, buffer, length + 1);
-		return interned;
-	}
-	return alloc_str(buffer, length, hash);
+	return alloc_str(owns_buffer, (char *)buffer, length, hash);
 }
 
 void print_object(value_t value){
 	switch(OBJ_TYPE(value)){
 		case OBJ_STRING:
-			printf("%s", AS_CSTRING(value));
+			printf("%.*s", (int)AS_STRING(value)->length, AS_CSTRING(value));
 			break;
 	}
 }

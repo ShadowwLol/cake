@@ -21,7 +21,9 @@ static void free_object(obj_t * obj){
 	switch(obj->type){
 		case OBJ_STRING:{
 			ostr_t * str = (ostr_t *)obj;
-			FREE_ARRAY(char, str->buffer, str->length + 1);
+			if (str->owns_buffer){
+				FREE_ARRAY(char, (char *)str->buffer, str->length + 1);
+			}
 			FREE(ostr_t, obj);
 			break;
 		}
