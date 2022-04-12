@@ -28,7 +28,7 @@ typedef enum{
 	PREC_PRIMARY
 } prec_t;
 
-typedef void (*parsefn)();
+typedef void (*parsefn)(const bool assignable);
 
 typedef struct{
 	parsefn prefix;
@@ -38,8 +38,12 @@ typedef struct{
 
 parser_t parser;
 chunk_t * compiled_chunk;
+table_t str_constants;
 
-static void expression();
+static uint64_t identifier_const(token_t * token);
+static void expression(void);
+static void statement(void);
+static void declaration(void);
 static prule_t * get_rule(ttype_t type);
 static void parse_prec(prec_t prec);
 
@@ -98,6 +102,19 @@ static void consume(ttype_t type, const char * message){
 	error_current(message);
 }
 
+static bool check(ttype_t type){
+	return parser.current.type == type;
+}
+
+static bool match(ttype_t type){
+	if (!check(type)){
+		return false;
+	}
+
+	advance();
+	return true;
+}
+
 static void emit_byte(uint8_t byte){
 	write_chunk(current_chunk(), byte, parser.previous.line);
 }
@@ -111,7 +128,7 @@ static void emit_return(void){
 	emit_byte(OP_RETURN);
 }
 
-static void emit_constant(value_t value){
+static uint64_t emit_constant(value_t value){
 	uint64_t constant = append_constant(current_chunk(), value);
 	if (constant < 256){
 		emit_bytes(OP_CONSTANT, constant);
@@ -119,6 +136,8 @@ static void emit_constant(value_t value){
 		emit_bytes(OP_CONSTANT_LONG, (uint8_t)(constant & 0xff));
 		emit_bytes((uint8_t)((constant >> 8) & 0xff), (uint8_t)((constant >> 16) & 0xff));
 	}
+
+	return constant;
 }
 
 static void end_compiler(void){
@@ -130,7 +149,7 @@ static void end_compiler(void){
 #endif
 }
 
-static void binary(void){
+static void binary(const bool assignable){
 	ttype_t op_type = parser.previous.type;
 	prule_t * rule = get_rule(op_type);
 
@@ -178,7 +197,7 @@ static void binary(void){
 	}
 }
 
-static void literal(void){
+static void literal(const bool assignable){
 	switch(parser.previous.type){
 		case TOKEN_NIL:
 			emit_byte(OP_NIL);
@@ -194,20 +213,35 @@ static void literal(void){
 	}
 }
 
-static void grouping(void){
+static void grouping(const bool assignable){
 	expression();
 	consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void number(void){
+static void number(const bool assignable){
 	emit_constant(NUMBER_VAL(strtod(parser.previous.start, NULL)));
 }
 
-static void string(void){
+static void string(const bool assignable){
 	emit_constant(OBJ_VAL(copy_str(false, parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void unary(void){
+static void named_var(token_t * token, const bool assignable){
+	uint64_t arg = identifier_const(token);
+
+	if (assignable && match(TOKEN_EQUAL)){
+		expression();
+		emit_bytes(OP_SET_GLOBAL, arg);
+	}else{
+		emit_bytes(OP_GET_GLOBAL, arg);
+	}
+}
+
+static void variable(const bool assignable){
+	named_var(&parser.previous, assignable);
+}
+
+static void unary(const bool assignable){
 	ttype_t op = parser.previous.type;
 
 	switch(op){
@@ -253,7 +287,7 @@ prule_t rules[] = {
 	[TOKEN_LESS]          = {NULL,     binary, PREC_COMPARISON},
 	[TOKEN_LESS_EQUAL]    = {NULL,     binary, PREC_COMPARISON},
 	/* * * * * * * */
-	[TOKEN_IDENTIFIER]    = {NULL,     NULL,   PREC_NONE},
+	[TOKEN_IDENTIFIER]    = {variable, NULL,   PREC_NONE},
 	[TOKEN_STRING]        = {string,   NULL,   PREC_NONE},
 	[TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
 	[TOKEN_AND]           = {NULL,     NULL,   PREC_NONE},
@@ -286,14 +320,43 @@ static void parse_prec(prec_t prec){
 		return;
 	}
 
-	prefix_rule();
+	const bool assignable = (prec <= PREC_ASSIGNMENT);
+	prefix_rule(assignable);
 
 	while (prec <= get_rule(parser.current.type)->prec){
 		advance();
 		parsefn infix_rule = get_rule(parser.previous.type)->infix;
 
-		infix_rule();
+		infix_rule(assignable);
 	}
+
+	if (assignable && match(TOKEN_EQUAL)){
+		// TODO: error() == err_curr or err_prev
+		error_current("Invalid assignment target.");
+	}
+}
+
+static uint64_t identifier_const(token_t * token){
+	// TODO: figure this out: true? false?
+	ostr_t * str = copy_str(false, token->start, token->length);
+	value_t ival;
+
+	if (get_table(&str_constants, str, &ival)){
+		return (uint64_t)AS_NUMBER(ival);
+	}
+
+	uint64_t index = emit_constant(OBJ_VAL(str));
+	set_table(&str_constants, str, NUMBER_VAL((double)index));
+	return index;
+}
+
+static uint64_t parse_var(const char * msg){
+	consume(TOKEN_IDENTIFIER, msg);
+	return identifier_const(&parser.previous);
+}
+
+static void define_var(uint64_t global){
+	emit_bytes(OP_DEFINE_GLOBAL, global);
 }
 
 static prule_t * get_rule(ttype_t type){
@@ -304,6 +367,74 @@ static void expression(void){
 	parse_prec(PREC_ASSIGNMENT);
 }
 
+static void var_declaration(void){
+	uint64_t global = parse_var("Expect variable name.");
+	if (match(TOKEN_EQUAL)){
+		expression();
+	}else{
+		emit_byte(OP_NIL);
+	}
+
+	consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+	define_var(global);
+}
+
+static void expression_statement(void){
+	expression();
+	consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+	emit_byte(OP_POP);
+}
+
+static void print_statement(void){
+	expression();
+	consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+	emit_byte(OP_PRINT);
+}
+
+static void sync(void){
+	parser.panic = false;
+
+	while (parser.current.type != TOKEN_EOF){
+		if (parser.previous.type == TOKEN_SEMICOLON){
+			return;
+		}
+
+		switch(parser.current.type){
+			case TOKEN_CLASS:
+			case TOKEN_FN:
+			case TOKEN_VAR:
+			case TOKEN_FOR:
+			case TOKEN_IF:
+			case TOKEN_WHILE:
+			case TOKEN_PRINT:
+			case TOKEN_RETURN:
+				return;
+			default: ;
+		}
+		advance();
+	}
+}
+
+static void declaration(void){
+	if (match(TOKEN_VAR)){
+		var_declaration();
+	}else{
+		statement();
+	}
+
+	if (parser.panic){
+		sync();
+	}
+}
+
+static void statement(void){
+	if (match(TOKEN_PRINT)){
+		print_statement();
+	}else{
+		expression_statement();
+	}
+}
+
 bool compile(const char * source, chunk_t * chunk){
 	init_lexer(source);
 	compiled_chunk = chunk;
@@ -311,10 +442,15 @@ bool compile(const char * source, chunk_t * chunk){
 	parser.error = false;
 	parser.panic = false;
 
-	advance();
-	expression();
-	consume(TOKEN_EOF, "Expect end of expression");
+	str_constants = init_table();
 
+	advance();
+
+	while (!match(TOKEN_EOF)){
+		declaration();
+	}
+
+	free_table(&str_constants);
 	end_compiler();
 	return !parser.error;
 }

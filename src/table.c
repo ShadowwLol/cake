@@ -33,7 +33,7 @@ static entry_t * find_entry(entry_t * entries, uint64_t capacity, ostr_t * key){
 			/* found key */
 			return entry;
 		}
-		index = index + 1 % capacity;
+		index = (index + 1) & (capacity - 1);
 	}
 }
 

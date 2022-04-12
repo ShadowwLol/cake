@@ -17,8 +17,9 @@ void reset_vm(void){
 	reset_stack();
 	vm.stack_capacity = 0;
 
-	vm.strings = init_table();
 	vm.objects = NULL;
+	vm.globals = init_table();
+	vm.strings = init_table();
 }
 
 void init_vm(void){
@@ -51,19 +52,20 @@ static value_t peek(int64_t distance){
 	return vm.stack[vm.stack_count -1 - distance];
 }
 
-#define runtime_error(msg)\
+#define runtime_error(msg, msg2)\
 	do{\
-		MEL_log(LOG_ERROR, "[line %lu]: %s", vm.chunk->lines[vm.ip - vm.chunk->bytes - 1], msg);\
+		MEL_log(LOG_ERROR, "[line %lu]: " msg, vm.chunk->lines[vm.ip - vm.chunk->bytes - 1], msg2);\
 		reset_stack();\
 	}while(false);
 
 static interpret_result run(void){
 #define READ_BYTE() (*vm.ip++)
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(type, op)\
 	do{\
 		if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))){\
-			runtime_error("Operand must be a number.");\
+			runtime_error("%s", "Operand must be a number.");\
 			return INTERPRET_RUNTIME_ERROR;\
 		}\
 		value_t b = pop();\
@@ -98,6 +100,34 @@ static interpret_result run(void){
 			case OP_FALSE:
 				push(BOOL_VAL(false));
 				break;
+			case OP_POP:
+				pop();
+				break;
+			case OP_GET_GLOBAL:{
+				ostr_t * name = READ_STRING();
+				value_t value;
+				if (!get_table(&vm.globals, name, &value)){
+					runtime_error("Undefined variable '%s'.", name->buffer);
+					return INTERPRET_RUNTIME_ERROR;
+				}
+				push(value);
+				break;
+			}
+			case OP_SET_GLOBAL:{
+				ostr_t * name = READ_STRING();
+				if (set_table(&vm.globals, name, peek(0))){
+					del_table(&vm.globals, name);
+					runtime_error("Undefined variable '%s'.", name->buffer);
+					return INTERPRET_RUNTIME_ERROR;
+				}
+				break;
+			}
+			case OP_DEFINE_GLOBAL:{
+				ostr_t * name = READ_STRING();
+				set_table(&vm.globals, name, peek(0));
+				pop();
+				break;
+			}
 			case OP_NOT:
 				vm.stack[vm.stack_count - 1] = BOOL_VAL(is_false(vm.stack[vm.stack_count - 1]));
 				break;
@@ -131,7 +161,7 @@ static interpret_result run(void){
 					vm.stack[vm.stack_count - 1] =\
 						NUMBER_VAL(AS_NUMBER(vm.stack[vm.stack_count - 1]) + AS_NUMBER(b));
 				}else{
-					runtime_error("Invalid operands.");
+					runtime_error("%s", "Invalid operands.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 				break;
@@ -147,7 +177,7 @@ static interpret_result run(void){
 				break;
 			case OP_REMAINDER:{
 				if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))){
-					runtime_error("Operand must be a number.");
+					runtime_error("%s", "Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 				value_t b = pop();
@@ -157,7 +187,7 @@ static interpret_result run(void){
 			}
 			case OP_MODULUS:{
 				if (!IS_NUMBER(peek(0))){
-					runtime_error("Operand must be a number.");
+					runtime_error("%s", "Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 				vm.stack[vm.stack_count - 1] = NUMBER_VAL(fabs(AS_NUMBER(vm.stack[vm.stack_count - 1])));
@@ -165,34 +195,41 @@ static interpret_result run(void){
 			}
 			case OP_INCREMENT:
 				if (!IS_NUMBER(peek(0))){
-					runtime_error("Operand must be a number.");
+					runtime_error("%s", "Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 				++AS_NUMBER(vm.stack[vm.stack_count - 1]);
 				break;
 			case OP_DECREMENT:
 				if (!IS_NUMBER(peek(0))){
-					runtime_error("Operand must be a number.");
+					runtime_error("%s", "Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 				--AS_NUMBER(vm.stack[vm.stack_count - 1]);
 				break;
 			case OP_NEGATE:
 				if (!IS_NUMBER(peek(0))){
-					runtime_error("Operand must be a number.");
+					runtime_error("%s", "Operand must be a number.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 				vm.stack[vm.stack_count - 1] = NUMBER_VAL(-AS_NUMBER(vm.stack[vm.stack_count - 1]));
 				break;
-			case OP_RETURN:{
+			/* built in functions  */
+			case OP_PRINT:{
 				print_value(pop());
 				putchar('\n');
+				break;
+			}
+			/* * * * * * * * * * * */
+			case OP_RETURN:{
+				/* exit interpreter */
 				return INTERPRET_OK;
 			}
 		}
 	}
 
 #undef BINARY_OP
+#undef READ_STRING
 #undef READ_CONSTANT
 #undef READ_BYTE
 }
@@ -215,9 +252,10 @@ interpret_result interpret(const char * source){
 }
 
 void free_vm(void){
+	free_table(&vm.globals);
+	free_table(&vm.strings);
 	FREE_ARRAY(value_t, vm.stack, vm.stack_capacity);
 	free_objects();
-	free_table(&vm.strings);
 	reset_vm();
 }
 

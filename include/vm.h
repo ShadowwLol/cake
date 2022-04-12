@@ -19,6 +19,7 @@ typedef struct{
 	uint64_t stack_capacity;
 	value_t * stack;
 
+	table_t globals;
 	table_t strings;
 	obj_t * objects;
 } vm_t;

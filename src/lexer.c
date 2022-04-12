@@ -81,8 +81,8 @@ static ttype_t check_keyword(uint16_t start, uint16_t length, const char * rest,
 static ttype_t identifier_type(void){
 	switch(lexer.start[0]){
 		case 'a': return check_keyword(1, 2, "nd",    TOKEN_AND);
-		case 'c': return check_keyword(1, 2, "lass",  TOKEN_CLASS);
-		case 'e': return check_keyword(1, 2, "lse",   TOKEN_ELSE);
+		case 'c': return check_keyword(1, 4, "lass",  TOKEN_CLASS);
+		case 'e': return check_keyword(1, 3, "lse",   TOKEN_ELSE);
 		case 'f':
 			if (lexer.current - lexer.start > 1){
 				switch (lexer.start[1]){
@@ -109,10 +109,10 @@ static ttype_t identifier_type(void){
 			}
 			break;
 		case 'n': return check_keyword(1, 2, "il",    TOKEN_NIL);
-		case 'o': return check_keyword(1, 2, "r",     TOKEN_OR);
-		case 'p': return check_keyword(1, 2, "rint",  TOKEN_PRINT);
-		case 'r': return check_keyword(1, 2, "eturn", TOKEN_RETURN);
-		case 's': return check_keyword(1, 2, "uper",  TOKEN_SUPER);
+		case 'o': return check_keyword(1, 1, "r",     TOKEN_OR);
+		case 'p': return check_keyword(1, 4, "rint",  TOKEN_PRINT);
+		case 'r': return check_keyword(1, 5, "eturn", TOKEN_RETURN);
+		case 's': return check_keyword(1, 4, "uper",  TOKEN_SUPER);
 		case 't':
 			if (lexer.current - lexer.start > 1){
 				switch (lexer.start[1]){
@@ -122,7 +122,7 @@ static ttype_t identifier_type(void){
 			}
 			break;
 		case 'v': return check_keyword(1, 2, "ar",    TOKEN_VAR);
-		case 'w': return check_keyword(1, 2, "hile",  TOKEN_WHILE);
+		case 'w': return check_keyword(1, 4, "hile",  TOKEN_WHILE);
 	}
 	return TOKEN_IDENTIFIER;
 }
