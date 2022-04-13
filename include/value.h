@@ -11,6 +11,8 @@ typedef enum{
 	VAL_NIL,
 	VAL_NUMBER,
 	VAL_OBJ,
+
+	VAL_UNDEFINED,
 } vtype_t;
 
 typedef struct{
@@ -26,6 +28,7 @@ typedef struct{
 #define IS_NIL(value) ((value).type == VAL_NIL)
 #define IS_NUMBER(value) ((value).type == VAL_NUMBER)
 #define IS_OBJ(value) ((value).type == VAL_OBJ)
+#define IS_UNDEFINED(value) ((value).type == VAL_UNDEFINED)
 
 #define AS_BOOL(value) ((value).as.boolean)
 #define AS_NUMBER(value) ((value).as.number)
@@ -35,6 +38,7 @@ typedef struct{
 #define NIL_VAL ((value_t){VAL_NIL, {.number = 0}})
 #define NUMBER_VAL(value) ((value_t){VAL_NUMBER, {.number = value}})
 #define OBJ_VAL(value) ((value_t){VAL_OBJ, {.obj = (obj_t *)value}})
+#define UNDEFINED_VAL ((value_t){VAL_UNDEFINED, {.number = 0}})
 
 typedef struct{
 	uint64_t count;

@@ -104,28 +104,25 @@ static interpret_result run(void){
 				pop();
 				break;
 			case OP_GET_GLOBAL:{
-				ostr_t * name = READ_STRING();
-				value_t value;
-				if (!get_table(&vm.globals, name, &value)){
-					runtime_error("Undefined variable '%s'.", name->buffer);
+				value_t value = vm.global_values.values[READ_BYTE()];
+				if (IS_UNDEFINED(value)){
+					runtime_error("%s", "Undefined variable.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
 				push(value);
 				break;
 			}
 			case OP_SET_GLOBAL:{
-				ostr_t * name = READ_STRING();
-				if (set_table(&vm.globals, name, peek(0))){
-					del_table(&vm.globals, name);
-					runtime_error("Undefined variable '%s'.", name->buffer);
+				uint8_t index = READ_BYTE();
+				if (IS_UNDEFINED(vm.global_values.values[index])){
+					runtime_error("%s", "Undefined variable.");
 					return INTERPRET_RUNTIME_ERROR;
 				}
+				vm.global_values.values[index] = peek(0);
 				break;
 			}
 			case OP_DEFINE_GLOBAL:{
-				ostr_t * name = READ_STRING();
-				set_table(&vm.globals, name, peek(0));
-				pop();
+				vm.global_values.values[READ_BYTE()] = pop();
 				break;
 			}
 			case OP_NOT:

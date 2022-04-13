@@ -5,12 +5,12 @@
 
 #include "../include/debug.h"
 
-static FN repl(bool debug){
+static FN repl(const bool debug){
 	char line[1024];
 	while (1){
 		printf("> ");
-
 		if (!fgets(line, sizeof(line), stdin)){
+			/* if special key combination is pressed, interpret what was written */
 			putchar('\n');
 			break;
 		}
@@ -20,7 +20,7 @@ static FN repl(bool debug){
 	return EX_S;
 }
 
-static FN interpret_file(bool debug, const char * path){
+static FN interpret_file(const bool debug, const char * path){
 	String file = init_str();
 	file = MEL_read_file(path);
 	interpret_result result = interpret(file.buffer);
@@ -41,7 +41,7 @@ int32_t main(int32_t argc, char * argv[]){
 		static struct option long_options[] = {
 		/* These options set a flag. */
 		{"help",        no_argument,            0,      'h'},
-		{"debug",       no_argument,      (int*)&debug,  1 },
+		{"debug",       no_argument,      (int*)&debug, 'd'},
 		{"interpret",   required_argument,      0,      'i'},
 		{"compile",     required_argument,      0,      'c'},
 		{0, 0, 0, 0}
@@ -51,7 +51,7 @@ int32_t main(int32_t argc, char * argv[]){
 	int32_t c = getopt_long(argc, argv, "hi:c:", long_options, &option_index);
 
 	if (debug){
-		printf("Debugging\n");
+		MEL_log(LOG_INFORMATION, "Debug mode");
 	}
 
 	switch (c){

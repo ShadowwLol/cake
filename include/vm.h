@@ -20,6 +20,8 @@ typedef struct{
 	value_t * stack;
 
 	table_t globals;
+	value_array_t global_values;
+
 	table_t strings;
 	obj_t * objects;
 } vm_t;

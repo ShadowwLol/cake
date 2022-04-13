@@ -38,7 +38,6 @@ typedef struct{
 
 parser_t parser;
 chunk_t * compiled_chunk;
-table_t str_constants;
 
 static uint64_t identifier_const(token_t * token);
 static void expression(void);
@@ -341,12 +340,13 @@ static uint64_t identifier_const(token_t * token){
 	ostr_t * str = copy_str(false, token->start, token->length);
 	value_t ival;
 
-	if (get_table(&str_constants, str, &ival)){
+	if (get_table(&vm.globals, str, &ival)){
 		return (uint64_t)AS_NUMBER(ival);
 	}
 
-	uint64_t index = emit_constant(OBJ_VAL(str));
-	set_table(&str_constants, str, NUMBER_VAL((double)index));
+	uint64_t index = (uint64_t)vm.global_values.count;
+	write_value_array(&vm.global_values, UNDEFINED_VAL);
+	set_table(&vm.globals, str, NUMBER_VAL((double)index));
 	return index;
 }
 
@@ -442,15 +442,12 @@ bool compile(const char * source, chunk_t * chunk){
 	parser.error = false;
 	parser.panic = false;
 
-	str_constants = init_table();
-
 	advance();
 
 	while (!match(TOKEN_EOF)){
 		declaration();
 	}
 
-	free_table(&str_constants);
 	end_compiler();
 	return !parser.error;
 }
